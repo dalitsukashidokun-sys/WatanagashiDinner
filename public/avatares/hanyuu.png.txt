@@ -1,0 +1,6 @@
+REEMPLAZAR ESTE ARCHIVO por una imagen real:
+  public/avatares/hanyuu.png
+
+Formatos aceptados: .png, .jpg, .webp
+Tamaño recomendado: 128×128px mínimo, cuadrada o circular.
+Mientras no exista la imagen, el componente muestra la inicial del personaje.

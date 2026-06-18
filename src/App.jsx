@@ -1,74 +1,71 @@
 // src/App.jsx
-// ─── Componente Raíz: Orquestación de la SPA ─────────────────────────────────
-// Gestiona el estado global de sesión y navegación entre vistas.
-// No usa react-router-dom: la "ruta" es simplemente un estado de React.
+// ─── Componente Raíz ──────────────────────────────────────────────────────────
+// Orquesta sesión, navegación por estado y paso de datos entre componentes.
+// Cambios v2: sin precios, upsertItem como única operación de escritura para
+// añadir/actualizar, fondo global gestionado desde PantallaLogin.
 
 import { useState, useEffect } from 'react'
 import { VISTAS } from './constants'
 import { useComandas } from './hooks/useComandas'
 import { usePlatos }   from './hooks/usePlatos'
 
-// Componentes de vista
-import PantallaLogin  from './components/PantallaLogin'
-import NavBar         from './components/NavBar'
-import VistaMenu      from './components/VistaMenu'
-import VistaDetalle   from './components/VistaDetalle'
-import VistaComanda   from './components/VistaComanda'
-import PanelAdmin     from './components/PanelAdmin'
+import PantallaLogin from './components/PantallaLogin'
+import NavBar        from './components/NavBar'
+import VistaMenu     from './components/VistaMenu'
+import VistaDetalle  from './components/VistaDetalle'
+import VistaComanda  from './components/VistaComanda'
+import PanelAdmin    from './components/PanelAdmin'
 
 export default function App() {
-  // ── Estado de sesión ──────────────────────────────────────────────────────
-  const [usuario,  setUsuario]  = useState(null)   // objeto usuario de Supabase
-  const [esAdmin,  setEsAdmin]  = useState(false)  // modo administrador
+  const [usuario,      setUsuario]      = useState(null)
+  const [esAdmin,      setEsAdmin]      = useState(false)
+  const [vista,        setVista]        = useState(VISTAS.MENU)
+  const [platoDetalle, setPlatoDetalle] = useState(null)
 
-  // ── Estado de navegación ─────────────────────────────────────────────────
-  const [vista,         setVista]         = useState(VISTAS.MENU)
-  const [platoDetalle,  setPlatoDetalle]  = useState(null) // plato seleccionado
-
-  // ── Restaurar sesión desde localStorage al cargar la app ─────────────────
+  // ── Restaurar sesión desde localStorage ──────────────────────────────────
   useEffect(() => {
     try {
-      const sesionGuardada = localStorage.getItem('higurashi_sesion')
-      const adminGuardado  = localStorage.getItem('higurashi_admin')
+      const admin  = localStorage.getItem('higurashi_admin')
+      const sesion = localStorage.getItem('higurashi_sesion')
 
-      if (adminGuardado === 'true') {
+      if (admin === 'true') {
         setEsAdmin(true)
         setVista(VISTAS.ADMIN)
-        setUsuario({ nombre: 'Admin', avatar: 'irie', id: 'admin' })
+        setUsuario({ id: 'admin', nombre: 'Admin', avatar: 'irie' })
         return
       }
-
-      if (sesionGuardada) {
-        const sesion = JSON.parse(sesionGuardada)
-        setUsuario(sesion)
+      if (sesion) {
+        setUsuario(JSON.parse(sesion))
         setVista(VISTAS.MENU)
       }
-    } catch (_) {
-      // Si el JSON está corrupto, limpiar y mostrar login
+    } catch {
       localStorage.clear()
     }
   }, [])
 
-  // ── Datos: platos del menú ────────────────────────────────────────────────
+  // ── Platos del menú (estáticos durante la sesión) ─────────────────────────
   const { platos, cargando: cargandoPlatos } = usePlatos()
 
-  // ── Datos: comandas del usuario actual ───────────────────────────────────
+  // ── Comandas del usuario actual ───────────────────────────────────────────
   const {
     comandas:          misComandas,
     cargando:          cargandoMisComandas,
-    total:             miTotal,
+    totalPlatos:       miTotalPlatos,
     rtActivo:          rtUser,
-    anyadirItem,
+    upsertItem,                 // ← única función de escritura (añadir + actualizar)
     actualizarCantidad,
     eliminarItem,
-  } = useComandas(usuario?.id !== 'admin' ? usuario?.id : null, false)
+  } = useComandas(
+    usuario?.id !== 'admin' ? usuario?.id : null,
+    false
+  )
 
-  // ── Datos: TODAS las comandas (solo admin) ────────────────────────────────
+  // ── Todas las comandas (solo admin) ───────────────────────────────────────
   const {
-    comandas: todasComandas,
-    cargando: cargandoAdmin,
-    total:    totalGlobal,
-    rtActivo: rtAdmin,
+    comandas:    todasComandas,
+    cargando:    cargandoAdmin,
+    totalPlatos: totalGlobalPlatos,
+    rtActivo:    rtAdmin,
   } = useComandas(null, esAdmin)
 
   // ── Handlers de sesión ────────────────────────────────────────────────────
@@ -81,7 +78,7 @@ export default function App() {
   function handleAdminAccess() {
     setEsAdmin(true)
     setVista(VISTAS.ADMIN)
-    setUsuario({ nombre: 'Admin', avatar: 'irie', id: 'admin' })
+    setUsuario({ id: 'admin', nombre: 'Admin', avatar: 'irie' })
   }
 
   function handleLogout() {
@@ -104,15 +101,12 @@ export default function App() {
     setVista(VISTAS.MENU)
   }
 
-  // ── Añadir ítem a comanda (desde VistaDetalle) ────────────────────────────
+  // ── Desde VistaDetalle: upsert inmediato (sin carrito temporal) ───────────
   async function handleAnyadirAComanda(platoId, cantidad, nota) {
-    return await anyadirItem(platoId, cantidad, nota)
+    return await upsertItem(platoId, cantidad, nota)
   }
 
-  // ── Total de ítems distintos en la comanda (para el badge) ────────────────
-  const totalItemsComanda = misComandas.length
-
-  // ── Si no hay sesión, mostrar pantalla de login ───────────────────────────
+  // Sin sesión → pantalla de login
   if (!usuario) {
     return (
       <PantallaLogin
@@ -122,69 +116,74 @@ export default function App() {
     )
   }
 
-  // ── App principal con navegación ──────────────────────────────────────────
+  // ── App principal ─────────────────────────────────────────────────────────
+  // El fondo global (bg-cover/fondo.jpg) se aplica aquí con una capa oscura
+  // para que todas las vistas internas mantengan la estética.
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Navbar sticky */}
-      <NavBar
-        usuario={usuario}
-        esAdmin={esAdmin}
-        vistaActual={vista}
-        totalItems={totalItemsComanda}
-        rtActivo={esAdmin ? rtAdmin : rtUser}
-        onNavegar={(v) => {
-          setPlatoDetalle(null)
-          setVista(v)
-        }}
-        onLogout={handleLogout}
-      />
+    <div
+      className="min-h-screen flex flex-col bg-cover bg-center bg-fixed"
+      style={{ backgroundImage: "url('/fondos/fondo.jpg')" }}
+    >
+      {/* Capa de oscurecimiento sobre el fondo */}
+      <div className="absolute inset-0 bg-black/70 pointer-events-none" />
 
-      {/* Contenido principal */}
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-6 sm:px-6 sm:py-8">
-        {vista === VISTAS.MENU && (
-          <VistaMenu
-            platos={platos}
-            cargando={cargandoPlatos}
-            onVerDetalle={handleVerDetalle}
-          />
-        )}
+      {/* Todo el contenido encima de la capa */}
+      <div className="relative flex flex-col flex-1">
+        <NavBar
+          usuario={usuario}
+          esAdmin={esAdmin}
+          vistaActual={vista}
+          totalItems={misComandas.length}
+          rtActivo={esAdmin ? rtAdmin : rtUser}
+          onNavegar={v => { setPlatoDetalle(null); setVista(v) }}
+          onLogout={handleLogout}
+        />
 
-        {vista === VISTAS.DETALLE && platoDetalle && (
-          <VistaDetalle
-            plato={platoDetalle}
-            onVolver={handleVolverAlMenu}
-            onAnyadir={handleAnyadirAComanda}
-          />
-        )}
+        <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-6 sm:px-6 sm:py-8">
+          {vista === VISTAS.MENU && (
+            <VistaMenu
+              platos={platos}
+              cargando={cargandoPlatos}
+              onVerDetalle={handleVerDetalle}
+            />
+          )}
 
-        {vista === VISTAS.COMANDA && (
-          <VistaComanda
-            usuario={usuario}
-            comandas={misComandas}
-            cargando={cargandoMisComandas}
-            total={miTotal}
-            rtActivo={rtUser}
-            onActualizarCantidad={actualizarCantidad}
-            onEliminar={eliminarItem}
-          />
-        )}
+          {vista === VISTAS.DETALLE && platoDetalle && (
+            <VistaDetalle
+              plato={platoDetalle}
+              onVolver={handleVolverAlMenu}
+              onAnyadir={handleAnyadirAComanda}
+            />
+          )}
 
-        {vista === VISTAS.ADMIN && esAdmin && (
-          <PanelAdmin
-            comandas={todasComandas}
-            cargando={cargandoAdmin}
-            total={totalGlobal}
-            rtActivo={rtAdmin}
-          />
-        )}
-      </main>
+          {vista === VISTAS.COMANDA && (
+            <VistaComanda
+              usuario={usuario}
+              comandas={misComandas}
+              cargando={cargandoMisComandas}
+              totalPlatos={miTotalPlatos}
+              rtActivo={rtUser}
+              onActualizarCantidad={actualizarCantidad}
+              onEliminar={eliminarItem}
+            />
+          )}
 
-      {/* Footer */}
-      <footer className="border-t border-slate-800/50 py-4 px-4 mt-auto">
-        <p className="text-center text-slate-700 text-xs font-serif">
-          Cuando las cigarras lloran · Higurashi no Naku Koro ni
-        </p>
-      </footer>
+          {vista === VISTAS.ADMIN && esAdmin && (
+            <PanelAdmin
+              comandas={todasComandas}
+              cargando={cargandoAdmin}
+              totalPlatos={totalGlobalPlatos}
+              rtActivo={rtAdmin}
+            />
+          )}
+        </main>
+
+        <footer className="border-t border-slate-800/30 py-4 px-4 mt-auto">
+          <p className="text-center text-slate-600 text-xs font-serif">
+            Cuando las cigarras lloran · Higurashi no Naku Koro ni
+          </p>
+        </footer>
+      </div>
     </div>
   )
 }

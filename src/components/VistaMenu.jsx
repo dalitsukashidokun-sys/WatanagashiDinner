@@ -90,13 +90,6 @@ function TarjetaPlato({ plato, onClick }) {
         {/* Overlay gradiente */}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent" />
 
-        {/* Precio superpuesto */}
-        <div className="absolute top-3 right-3">
-          <span className="bg-slate-950/90 text-red-300 text-sm font-semibold px-2.5 py-1 rounded-lg border border-red-900/30">
-            {Number(plato.precio).toFixed(2)} €
-          </span>
-        </div>
-
         {/* Nombre sobre la imagen */}
         <div className="absolute bottom-0 left-0 right-0 p-3">
           <h3 className="font-serif text-base font-semibold text-white leading-tight line-clamp-2">
@@ -112,22 +105,18 @@ function TarjetaPlato({ plato, onClick }) {
           {plato.descripcion_corta}
         </p>
 
-        {/* Etiquetas */}
-        {plato.etiquetas?.length > 0 && (
+        {/* Etiquetas + CTA */}
+        <div className="flex items-center justify-between gap-2">
           <div className="flex flex-wrap gap-1.5">
-            {plato.etiquetas.slice(0, 3).map((tag) => (
+            {plato.etiquetas?.slice(0, 2).map((tag) => (
               <span key={tag} className="tag tag-slate">{tag}</span>
             ))}
-            {plato.etiquetas.length > 3 && (
-              <span className="tag tag-slate">+{plato.etiquetas.length - 3}</span>
+            {plato.etiquetas?.length > 2 && (
+              <span className="tag tag-slate">+{plato.etiquetas.length - 2}</span>
             )}
           </div>
-        )}
-
-        {/* CTA */}
-        <div className="pt-1">
-          <span className="text-xs text-red-400 group-hover:text-red-300 transition-colors font-medium">
-            Ver detalle →
+          <span className="text-xs text-red-400 group-hover:text-red-300 transition-colors font-medium shrink-0">
+            Ver →
           </span>
         </div>
       </div>

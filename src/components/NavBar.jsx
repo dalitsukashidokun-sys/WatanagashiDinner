@@ -1,16 +1,17 @@
 // src/components/NavBar.jsx
 // ─── Barra de Navegación Superior ────────────────────────────────────────────
+// Usa la imagen de avatar del personaje en lugar de emoji.
 
 import { LogOut, ShoppingBag, UtensilsCrossed, LayoutDashboard } from 'lucide-react'
 import { PERSONAJES, VISTAS } from '../constants'
 
 /**
  * @param {Object}   usuario      - Usuario en sesión
- * @param {boolean}  esAdmin      - Si true, muestra acceso al panel admin
- * @param {string}   vistaActual  - Vista actualmente visible
- * @param {number}   totalItems   - Número total de ítems en la comanda
- * @param {boolean}  rtActivo     - Indicador de actividad realtime
- * @param {Function} onNavegar    - Callback(vista) para cambiar de vista
+ * @param {boolean}  esAdmin      - Muestra acceso al panel admin
+ * @param {string}   vistaActual  - Vista activa para resaltar la pestaña
+ * @param {number}   totalItems   - Número de tipos de platos en comanda (para badge)
+ * @param {boolean}  rtActivo     - Indicador de actividad Realtime
+ * @param {Function} onNavegar    - Callback(vista)
  * @param {Function} onLogout     - Callback para cerrar sesión
  */
 export default function NavBar({
@@ -22,7 +23,7 @@ export default function NavBar({
   onNavegar,
   onLogout,
 }) {
-  const personaje = PERSONAJES.find((p) => p.id === usuario?.avatar)
+  const personaje = PERSONAJES.find(p => p.id === usuario?.avatar)
 
   const navItems = [
     {
@@ -48,8 +49,8 @@ export default function NavBar({
 
   return (
     <header className="sticky top-0 z-40 bg-slate-950/95 backdrop-blur-sm border-b border-slate-800/80">
-      {/* ── Barra principal ── */}
       <div className="flex items-center justify-between h-14 px-4 max-w-5xl mx-auto">
+
         {/* Logo */}
         <div className="flex items-center gap-2.5">
           <span className="text-xl">⛩️</span>
@@ -59,9 +60,9 @@ export default function NavBar({
           </div>
         </div>
 
-        {/* Centro: navegación */}
+        {/* Navegación central */}
         <nav className="flex items-center gap-1">
-          {navItems.filter((n) => n.visible).map((item) => (
+          {navItems.filter(n => n.visible).map(item => (
             <button
               key={item.id}
               onClick={() => onNavegar(item.id)}
@@ -74,7 +75,6 @@ export default function NavBar({
             >
               {item.icono}
               <span className="hidden sm:inline">{item.label}</span>
-              {/* Badge de cantidad */}
               {item.badge && (
                 <span className="absolute -top-1 -right-1 bg-red-700 text-white text-[10px]
                   font-bold w-4 h-4 rounded-full flex items-center justify-center">
@@ -85,33 +85,40 @@ export default function NavBar({
           ))}
         </nav>
 
-        {/* Derecha: usuario + logout */}
+        {/* Derecha: avatar + nombre + logout */}
         <div className="flex items-center gap-2">
-          {/* Indicador realtime */}
+          {/* Indicador Realtime */}
           <span
-            className={`w-1.5 h-1.5 rounded-full transition-all duration-300 hidden sm:block
-              ${rtActivo ? 'bg-emerald-400 shadow-[0_0_5px_rgba(52,211,153,0.7)]' : 'bg-slate-700'}`}
             title={rtActivo ? 'Sincronizando' : 'Conectado'}
+            className={`w-1.5 h-1.5 rounded-full transition-all duration-300 hidden sm:block
+              ${rtActivo
+                ? 'bg-emerald-400 shadow-[0_0_5px_rgba(52,211,153,0.7)]'
+                : 'bg-slate-700'
+              }`}
           />
 
-          {/* Avatar + nombre */}
-          <div className="flex items-center gap-1.5">
-            {!esAdmin ? (
-              <>
-                <span className="text-base">{personaje?.emoji || '👤'}</span>
-                <span className="text-sm text-slate-300 hidden sm:inline max-w-24 truncate">
-                  {usuario?.nombre}
-                </span>
-              </>
-            ) : (
-              <span className="text-xs text-amber-500 border border-amber-800/50
-                bg-amber-950/30 px-2 py-0.5 rounded-md font-medium">
-                Admin
+          {!esAdmin ? (
+            <div className="flex items-center gap-1.5">
+              {/* Avatar del personaje (imagen local) */}
+              <div className="w-7 h-7 rounded-full overflow-hidden bg-slate-800 border border-slate-700 shrink-0">
+                <img
+                  src={personaje?.avatar}
+                  alt={personaje?.nombre}
+                  className="w-full h-full object-cover"
+                  onError={e => { e.target.style.display = 'none' }}
+                />
+              </div>
+              <span className="text-sm text-slate-300 hidden sm:inline max-w-24 truncate">
+                {usuario?.nombre}
               </span>
-            )}
-          </div>
+            </div>
+          ) : (
+            <span className="text-xs text-amber-500 border border-amber-800/50
+              bg-amber-950/30 px-2 py-0.5 rounded-md font-medium">
+              Admin
+            </span>
+          )}
 
-          {/* Botón cerrar sesión */}
           <button
             onClick={onLogout}
             className="btn-ghost flex items-center gap-1.5 text-xs px-2.5 py-1.5"

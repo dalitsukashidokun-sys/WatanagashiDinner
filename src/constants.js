@@ -1,15 +1,17 @@
 // src/constants.js
 // ─── Constantes y Datos Estáticos ─────────────────────────────────────────────
 
-// Contraseña del panel de administrador (en producción real usaría auth de Supabase)
+// Contraseña del panel de administrador
 export const ADMIN_PASSWORD = 'admin123'
 
-// ─── Personajes jugables ────────────────────────────────────────────────────
+// ─── Personajes jugables ─────────────────────────────────────────────────────
+// Los avatares se sirven desde /public/avatares/<id>.png
+// Coloca tus imágenes en: public/avatares/keiichi.png, rena.png, etc.
 export const PERSONAJES = [
   {
     id: 'keiichi',
     nombre: 'Keiichi Maebara',
-    emoji: '🗡️',
+    avatar: '/avatares/keiichi.png',
     color: 'from-blue-900/40 to-blue-950',
     borderColor: 'border-blue-700/50',
     textColor: 'text-blue-300',
@@ -18,7 +20,7 @@ export const PERSONAJES = [
   {
     id: 'rena',
     nombre: 'Rena Ryuuguu',
-    emoji: '🪓',
+    avatar: '/avatares/rena.png',
     color: 'from-pink-900/40 to-pink-950',
     borderColor: 'border-pink-700/50',
     textColor: 'text-pink-300',
@@ -27,7 +29,7 @@ export const PERSONAJES = [
   {
     id: 'mion',
     nombre: 'Mion Sonozaki',
-    emoji: '🎯',
+    avatar: '/avatares/mion.png',
     color: 'from-emerald-900/40 to-emerald-950',
     borderColor: 'border-emerald-700/50',
     textColor: 'text-emerald-300',
@@ -36,7 +38,7 @@ export const PERSONAJES = [
   {
     id: 'shion',
     nombre: 'Shion Sonozaki',
-    emoji: '🌸',
+    avatar: '/avatares/shion.png',
     color: 'from-violet-900/40 to-violet-950',
     borderColor: 'border-violet-700/50',
     textColor: 'text-violet-300',
@@ -45,7 +47,7 @@ export const PERSONAJES = [
   {
     id: 'rika',
     nombre: 'Furude Rika',
-    emoji: '🔮',
+    avatar: '/avatares/rika.png',
     color: 'from-indigo-900/40 to-indigo-950',
     borderColor: 'border-indigo-700/50',
     textColor: 'text-indigo-300',
@@ -54,7 +56,7 @@ export const PERSONAJES = [
   {
     id: 'satoko',
     nombre: 'Houjou Satoko',
-    emoji: '🪤',
+    avatar: '/avatares/satoko.png',
     color: 'from-amber-900/40 to-amber-950',
     borderColor: 'border-amber-700/50',
     textColor: 'text-amber-300',
@@ -63,7 +65,7 @@ export const PERSONAJES = [
   {
     id: 'hanyuu',
     nombre: 'Hanyuu',
-    emoji: '🦋',
+    avatar: '/avatares/hanyuu.png',
     color: 'from-purple-900/40 to-purple-950',
     borderColor: 'border-purple-700/50',
     textColor: 'text-purple-300',
@@ -72,7 +74,7 @@ export const PERSONAJES = [
   {
     id: 'irie',
     nombre: 'Dr. Irie',
-    emoji: '💉',
+    avatar: '/avatares/irie.png',
     color: 'from-cyan-900/40 to-cyan-950',
     borderColor: 'border-cyan-700/50',
     textColor: 'text-cyan-300',

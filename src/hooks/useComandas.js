@@ -1,23 +1,21 @@
 // src/hooks/useComandas.js
-// ─── Hook: Gestión de Comandas con Supabase Realtime ─────────────────────────
+// ─── Hook: Comandas con upsert inmediato y Supabase Realtime ─────────────────
+// No existe "carrito temporal": cada cambio de cantidad se persiste al instante.
 
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../supabaseClient'
 
 /**
- * Gestiona las comandas del usuario actual y (opcionalmente) todas las comandas
- * para el panel de admin. Se suscribe a cambios en tiempo real de Supabase.
- *
- * @param {string|null} usuarioId - UUID del usuario en sesión (null si es admin)
- * @param {boolean}     esAdmin   - Si true, carga todas las comandas
+ * @param {string|null} usuarioId - UUID del usuario en sesión (null solo en admin puro)
+ * @param {boolean}     esAdmin   - Si true, carga TODAS las comandas sin filtro de usuario
  */
 export function useComandas(usuarioId, esAdmin = false) {
-  const [comandas,    setComandas]    = useState([])
-  const [cargando,    setCargando]    = useState(true)
-  const [error,       setError]       = useState(null)
-  const [rtActivo,    setRtActivo]    = useState(false)   // indicador de señal realtime
+  const [comandas, setComandas] = useState([])
+  const [cargando, setCargando] = useState(true)
+  const [error,    setError]    = useState(null)
+  const [rtActivo, setRtActivo] = useState(false)
 
-  // ── Cargar comandas iniciales ──────────────────────────────────────────────
+  // ── Carga completa (usada en mount y en cada evento Realtime) ─────────────
   const cargarComandas = useCallback(async () => {
     setCargando(true)
     try {
@@ -27,14 +25,15 @@ export function useComandas(usuarioId, esAdmin = false) {
           id,
           cantidad,
           nota,
+          usuario_id,
+          plato_id,
           created_at,
           updated_at,
-          platos ( id, nombre, precio, categoria, imagen_url, etiquetas ),
-          usuarios ( id, nombre, avatar )
+          platos  ( id, nombre, categoria, imagen_url, etiquetas ),
+          usuarios( id, nombre, avatar )
         `)
         .order('created_at', { ascending: true })
 
-      // Si no es admin, filtrar solo las del usuario actual
       if (!esAdmin && usuarioId) {
         query = query.eq('usuario_id', usuarioId)
       }
@@ -49,82 +48,93 @@ export function useComandas(usuarioId, esAdmin = false) {
     }
   }, [usuarioId, esAdmin])
 
-  // ── Suscripción a cambios en tiempo real ─────────────────────────────────
+  // ── Suscripción Realtime ──────────────────────────────────────────────────
   useEffect(() => {
     if (!usuarioId && !esAdmin) return
 
     cargarComandas()
 
-    // Canal único por combinación usuario/rol
-    const canalNombre = esAdmin ? 'admin-comandas' : `user-${usuarioId}-comandas`
+    const canalNombre = esAdmin ? 'rt-admin-comandas' : `rt-user-${usuarioId}`
 
     const canal = supabase
       .channel(canalNombre)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'comandas' },
-        (payload) => {
-          // Pulsar indicador visual de actividad realtime
+        () => {
+          // Pulso visual del indicador de actividad
           setRtActivo(true)
           setTimeout(() => setRtActivo(false), 800)
-
-          // Recargar cuando hay cambios (INSERT, UPDATE, DELETE)
-          // Una recarga completa evita inconsistencias con los joins
+          // Recarga con joins completos (más fiable que aplicar el diff manualmente)
           cargarComandas()
         }
       )
       .subscribe()
 
-    return () => {
-      supabase.removeChannel(canal)
-    }
+    return () => { supabase.removeChannel(canal) }
   }, [usuarioId, esAdmin, cargarComandas])
 
-  // ── Añadir o actualizar un ítem en la comanda ─────────────────────────────
-  const anyadirItem = useCallback(async (platoId, cantidad, nota) => {
-    if (!usuarioId) return { error: 'No hay usuario en sesión' }
+  // ── UPSERT INMEDIATO ──────────────────────────────────────────────────────
+  // Se usa tanto para "Añadir desde detalle" como para +/- en la comanda.
+  // Si el plato ya existe para ese usuario → UPDATE cantidad.
+  // Si no existe → INSERT.
+  // Si la nueva cantidad es 0 → DELETE.
+  const upsertItem = useCallback(async (platoId, cantidad, nota = null) => {
+    if (!usuarioId) return { error: 'Sin usuario en sesión' }
 
-    // Verificar si ya existe este plato en la comanda del usuario
-    const { data: existente } = await supabase
-      .from('comandas')
-      .select('id, cantidad')
-      .eq('usuario_id', usuarioId)
-      .eq('plato_id', platoId)
-      .maybeSingle()
-
-    if (existente) {
-      // Actualizar cantidad sumando la nueva
+    // Cantidad 0 o negativa = eliminar
+    if (cantidad <= 0) {
       const { error: err } = await supabase
         .from('comandas')
-        .update({
-          cantidad: existente.cantidad + cantidad,
-          nota: nota || existente.nota,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', existente.id)
-      return { error: err?.message || null }
-    } else {
-      // Insertar nuevo ítem
-      const { error: err } = await supabase
-        .from('comandas')
-        .insert({ usuario_id: usuarioId, plato_id: platoId, cantidad, nota: nota || null })
+        .delete()
+        .eq('usuario_id', usuarioId)
+        .eq('plato_id', platoId)
       return { error: err?.message || null }
     }
+
+    // Upsert: la combinación (usuario_id, plato_id) debe tener constraint UNIQUE en Supabase.
+    // El script SQL del proyecto ya lo incluye. Si no, añádelo:
+    // ALTER TABLE comandas ADD CONSTRAINT comandas_usuario_plato_key UNIQUE (usuario_id, plato_id);
+    const { error: err } = await supabase
+      .from('comandas')
+      .upsert(
+        {
+          usuario_id:  usuarioId,
+          plato_id:    platoId,
+          cantidad,
+          nota:        nota ?? null,
+          updated_at:  new Date().toISOString(),
+        },
+        { onConflict: 'usuario_id,plato_id' }
+      )
+
+    return { error: err?.message || null }
   }, [usuarioId])
 
-  // ── Actualizar cantidad de un ítem ────────────────────────────────────────
+  // ── Actualizar cantidad desde la comanda (por id de fila) ─────────────────
+  // Traduce el id de fila → (usuario_id, plato_id) y llama a upsertItem.
   const actualizarCantidad = useCallback(async (comandaId, nuevaCantidad) => {
-    if (nuevaCantidad < 1) {
-      return eliminarItem(comandaId)
+    // Buscar la fila en el estado local para obtener plato_id
+    const fila = comandas.find(c => c.id === comandaId)
+    if (!fila) return { error: 'Ítem no encontrado' }
+
+    if (nuevaCantidad <= 0) {
+      // Eliminar directamente por id
+      const { error: err } = await supabase
+        .from('comandas')
+        .delete()
+        .eq('id', comandaId)
+      return { error: err?.message || null }
     }
+
     const { error: err } = await supabase
       .from('comandas')
       .update({ cantidad: nuevaCantidad, updated_at: new Date().toISOString() })
       .eq('id', comandaId)
     return { error: err?.message || null }
-  }, [])
+  }, [comandas])
 
-  // ── Eliminar un ítem de la comanda ────────────────────────────────────────
+  // ── Eliminar por id de fila ───────────────────────────────────────────────
   const eliminarItem = useCallback(async (comandaId) => {
     const { error: err } = await supabase
       .from('comandas')
@@ -133,18 +143,16 @@ export function useComandas(usuarioId, esAdmin = false) {
     return { error: err?.message || null }
   }, [])
 
-  // ── Total económico de las comandas cargadas ──────────────────────────────
-  const total = comandas.reduce((acc, c) => {
-    return acc + (c.platos?.precio || 0) * c.cantidad
-  }, 0)
+  // ── Recuento total de platos (sin precios) ────────────────────────────────
+  const totalPlatos = comandas.reduce((acc, c) => acc + c.cantidad, 0)
 
   return {
     comandas,
     cargando,
     error,
     rtActivo,
-    total,
-    anyadirItem,
+    totalPlatos,   // cantidad total, no monetaria
+    upsertItem,
     actualizarCantidad,
     eliminarItem,
     recargar: cargarComandas,
