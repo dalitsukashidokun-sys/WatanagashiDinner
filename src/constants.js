@@ -1,0 +1,97 @@
+// src/constants.js
+// ─── Constantes y Datos Estáticos ─────────────────────────────────────────────
+
+// Contraseña del panel de administrador (en producción real usaría auth de Supabase)
+export const ADMIN_PASSWORD = 'admin123'
+
+// ─── Personajes jugables ────────────────────────────────────────────────────
+export const PERSONAJES = [
+  {
+    id: 'keiichi',
+    nombre: 'Keiichi Maebara',
+    emoji: '🗡️',
+    color: 'from-blue-900/40 to-blue-950',
+    borderColor: 'border-blue-700/50',
+    textColor: 'text-blue-300',
+    descripcion: 'El chico nuevo de Hinamizawa',
+  },
+  {
+    id: 'rena',
+    nombre: 'Rena Ryuuguu',
+    emoji: '🪓',
+    color: 'from-pink-900/40 to-pink-950',
+    borderColor: 'border-pink-700/50',
+    textColor: 'text-pink-300',
+    descripcion: '¡Me lo llevo a casa!',
+  },
+  {
+    id: 'mion',
+    nombre: 'Mion Sonozaki',
+    emoji: '🎯',
+    color: 'from-emerald-900/40 to-emerald-950',
+    borderColor: 'border-emerald-700/50',
+    textColor: 'text-emerald-300',
+    descripcion: 'Líder del Club de Juegos',
+  },
+  {
+    id: 'shion',
+    nombre: 'Shion Sonozaki',
+    emoji: '🌸',
+    color: 'from-violet-900/40 to-violet-950',
+    borderColor: 'border-violet-700/50',
+    textColor: 'text-violet-300',
+    descripcion: 'Gemela de Mion',
+  },
+  {
+    id: 'rika',
+    nombre: 'Furude Rika',
+    emoji: '🔮',
+    color: 'from-indigo-900/40 to-indigo-950',
+    borderColor: 'border-indigo-700/50',
+    textColor: 'text-indigo-300',
+    descripcion: 'Miko del Santuario Furude',
+  },
+  {
+    id: 'satoko',
+    nombre: 'Houjou Satoko',
+    emoji: '🪤',
+    color: 'from-amber-900/40 to-amber-950',
+    borderColor: 'border-amber-700/50',
+    textColor: 'text-amber-300',
+    descripcion: 'Maestra de las trampas',
+  },
+  {
+    id: 'hanyuu',
+    nombre: 'Hanyuu',
+    emoji: '🦋',
+    color: 'from-purple-900/40 to-purple-950',
+    borderColor: 'border-purple-700/50',
+    textColor: 'text-purple-300',
+    descripcion: 'Oyashiro-sama',
+  },
+  {
+    id: 'irie',
+    nombre: 'Dr. Irie',
+    emoji: '💉',
+    color: 'from-cyan-900/40 to-cyan-950',
+    borderColor: 'border-cyan-700/50',
+    textColor: 'text-cyan-300',
+    descripcion: 'Director de la Clínica',
+  },
+]
+
+// ─── Categorías del menú ─────────────────────────────────────────────────────
+export const CATEGORIAS = [
+  { id: 'principal',      label: 'Platos Principales', emoji: '🍱' },
+  { id: 'acompanamiento', label: 'Acompañamientos',    emoji: '🥢' },
+  { id: 'postre',         label: 'Postres',             emoji: '🍡' },
+]
+
+// ─── Vistas de la SPA ────────────────────────────────────────────────────────
+export const VISTAS = {
+  LOGIN:   'login',
+  MENU:    'menu',
+  DETALLE: 'detalle',
+  COMANDA: 'comanda',
+  ADMIN:   'admin',
+}

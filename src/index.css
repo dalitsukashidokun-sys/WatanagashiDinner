@@ -1,0 +1,127 @@
+/* ─── Tailwind Base Layers ───────────────────────────────────────────────────── */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Estilos Globales Temáticos ─────────────────────────────────────────────── */
+@layer base {
+  /* Scroll personalizado con estética oscura */
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-slate-950;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-red-900 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-red-700;
+  }
+
+  /* Selección de texto en rojo */
+  ::selection {
+    @apply bg-red-900/50 text-red-100;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-slate-950 text-slate-100 font-sans;
+    /* Textura de ruido sutil sobre el fondo */
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(127, 29, 29, 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 10%, rgba(88, 28, 135, 0.04) 0%, transparent 50%);
+  }
+}
+
+/* ─── Componentes Reutilizables via @layer ───────────────────────────────────── */
+@layer components {
+  /* Botón principal: rojo sangre */
+  .btn-primary {
+    @apply bg-red-800 hover:bg-red-700 active:bg-red-900
+           text-white font-semibold px-5 py-2.5 rounded-lg
+           transition-all duration-150 active:scale-95
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* Botón secundario: borde tenue */
+  .btn-ghost {
+    @apply bg-transparent hover:bg-slate-800 active:bg-slate-700
+           text-slate-400 hover:text-slate-200 border border-slate-700
+           font-medium px-4 py-2 rounded-lg transition-all duration-150 active:scale-95;
+  }
+
+  /* Botón destructivo: eliminar */
+  .btn-danger {
+    @apply bg-rose-900/30 hover:bg-rose-800/50 active:bg-rose-900
+           text-rose-400 hover:text-rose-300 border border-rose-900/50
+           px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-150;
+  }
+
+  /* Botón de éxito: confirmar / añadir */
+  .btn-success {
+    @apply bg-emerald-800 hover:bg-emerald-700 active:bg-emerald-900
+           text-white font-semibold px-5 py-2.5 rounded-lg
+           transition-all duration-150 active:scale-95
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* Input estándar con estética oscura */
+  .input-dark {
+    @apply bg-slate-900 border border-slate-700 text-slate-100
+           placeholder:text-slate-500 rounded-lg px-4 py-2.5
+           focus:outline-none focus:border-red-700 focus:ring-1 focus:ring-red-800/50
+           transition-colors duration-150 w-full;
+  }
+
+  /* Tarjeta base de la aplicación */
+  .card-dark {
+    @apply bg-slate-900 border border-slate-800 rounded-xl overflow-hidden
+           transition-all duration-200;
+  }
+
+  /* Pestaña de categoría */
+  .tab-item {
+    @apply px-4 py-2 rounded-lg text-sm font-medium transition-all duration-150
+           text-slate-400 hover:text-slate-200 hover:bg-slate-800
+           border border-transparent cursor-pointer;
+  }
+  .tab-item.active {
+    @apply bg-red-900/30 text-red-300 border-red-900/50;
+  }
+
+  /* Etiqueta/pill */
+  .tag {
+    @apply inline-block text-xs font-medium px-2.5 py-0.5 rounded-full;
+  }
+  .tag-red {
+    @apply bg-red-900/40 text-red-300 border border-red-800/50;
+  }
+  .tag-slate {
+    @apply bg-slate-800/80 text-slate-400 border border-slate-700/50;
+  }
+  .tag-emerald {
+    @apply bg-emerald-900/40 text-emerald-400 border border-emerald-800/50;
+  }
+}
+
+/* ─── Utilidades Extra ───────────────────────────────────────────────────────── */
+@layer utilities {
+  /* Texto con gradiente rojo/rosa */
+  .text-gradient-red {
+    @apply bg-gradient-to-r from-red-400 to-rose-300 bg-clip-text text-transparent;
+  }
+
+  /* Borde con brillo sutil en rojo */
+  .glow-red {
+    box-shadow: 0 0 20px rgba(185, 28, 28, 0.2), 0 0 40px rgba(185, 28, 28, 0.05);
+  }
+
+  /* Ocultar scrollbar manteniendo scroll */
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+}
