@@ -279,17 +279,18 @@ function SeccionJuego() {
     
     {/* CORRECCIÓN: Invocación explícita de la función */}
     <button 
-      onClick={() => exec(async () => await toggleJuegoHabilitado(), habilitado ? 'Juego desactivado.' : 'Juego activado.')}
-      disabled={busy}
-      className={`relative flex-shrink-0 h-8 w-14 rounded-full transition-colors duration-300 border-2 
-        ${habilitado ? 'bg-red-700 border-red-500' : 'bg-stone-800 border-stone-700'}
-        ${busy ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-    >
-      {/* CORRECCIÓN: Ajuste de translate para que encaje perfecto en el ancho w-14 */}
-      <span className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300 
-        ${habilitado ? 'translate-x-7' : 'translate-x-1'}`} 
-      />
-    </button>
+  onClick={() => exec(toggleJuegoHabilitado, habilitado ? 'Juego desactivado.' : 'Juego activado.')}
+  disabled={busy}
+  // Añadimos 'flex items-center' para asegurar alineación vertical automática
+  className={`relative flex items-center flex-shrink-0 h-8 w-14 rounded-full transition-colors duration-300 border-2 ${
+    habilitado ? 'bg-red-700 border-red-500' : 'bg-stone-800 border-stone-700'
+  }`}
+>
+  {/* Ajuste: usamos left-0.5 y translate-x-6 para compensar el borde */}
+  <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300 ${
+    habilitado ? 'translate-x-6' : 'translate-x-0'
+  }`} />
+</button>
   </div>
 </div>
 
