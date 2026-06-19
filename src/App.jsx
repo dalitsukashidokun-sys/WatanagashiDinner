@@ -1,13 +1,12 @@
 // src/App.jsx
-// ─── Componente Raíz ──────────────────────────────────────────────────────────
-// Orquesta sesión, navegación por estado y paso de datos entre componentes.
-// Cambios v2: sin precios, upsertItem como única operación de escritura para
-// añadir/actualizar, fondo global gestionado desde PantallaLogin.
+// ─── Componente Raíz v2: Comanda + Motor de Juego ────────────────────────────
+// Integra el nuevo módulo de juego oculto manteniendo toda la lógica de comanda.
 
 import { useState, useEffect } from 'react'
 import { VISTAS } from './constants'
 import { useComandas } from './hooks/useComandas'
 import { usePlatos }   from './hooks/usePlatos'
+import { supabase }    from './supabaseClient'
 
 import PantallaLogin from './components/PantallaLogin'
 import NavBar        from './components/NavBar'
@@ -15,12 +14,14 @@ import VistaMenu     from './components/VistaMenu'
 import VistaDetalle  from './components/VistaDetalle'
 import VistaComanda  from './components/VistaComanda'
 import PanelAdmin    from './components/PanelAdmin'
+import VistaJuego    from './components/VistaJuego'
 
 export default function App() {
   const [usuario,      setUsuario]      = useState(null)
   const [esAdmin,      setEsAdmin]      = useState(false)
   const [vista,        setVista]        = useState(VISTAS.MENU)
   const [platoDetalle, setPlatoDetalle] = useState(null)
+  const [juegoHabilitado, setJuegoHabilitado] = useState(false)
 
   // ── Restaurar sesión desde localStorage ──────────────────────────────────
   useEffect(() => {
@@ -43,22 +44,47 @@ export default function App() {
     }
   }, [])
 
-  // ── Platos del menú (estáticos durante la sesión) ─────────────────────────
+  // ── Escuchar cambios en juego_habilitado (Realtime) ───────────────────────
+  useEffect(() => {
+    if (!usuario) return
+
+    // Carga inicial
+    supabase.from('estado_juego').select('juego_habilitado').single().then(({ data }) => {
+      if (data) setJuegoHabilitado(data.juego_habilitado)
+    })
+
+    // Suscripción Realtime
+    const canal = supabase
+      .channel('app-estado-juego')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'estado_juego' }, (payload) => {
+        if (payload.new?.juego_habilitado !== undefined) {
+          setJuegoHabilitado(payload.new.juego_habilitado)
+        }
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(canal) }
+  }, [usuario])
+
+  // ── Fondos responsivos por vista ──────────────────────────────────────────
+  // menu_usuario → Fondomenu, resto → fondo base
+  const esVistaMenu = vista === VISTAS.MENU && !esAdmin
+  const fondoPc = esVistaMenu ? '/fondos/Fondomenu_pc.png' : '/fondos/fondo.png'
+  const fondoMovil = esVistaMenu ? '/fondos/Fondomenu_movil.png' : '/fondos/fondo2.png'
+
+  // ── Platos del menú ───────────────────────────────────────────────────────
   const { platos, cargando: cargandoPlatos } = usePlatos()
 
-  // ── Comandas del usuario actual ───────────────────────────────────────────
+  // ── Comandas del usuario ──────────────────────────────────────────────────
   const {
-    comandas:          misComandas,
-    cargando:          cargandoMisComandas,
-    totalPlatos:       miTotalPlatos,
-    rtActivo:          rtUser,
-    upsertItem,                 // ← única función de escritura (añadir + actualizar)
+    comandas:      misComandas,
+    cargando:      cargandoMisComandas,
+    totalPlatos:   miTotalPlatos,
+    rtActivo:      rtUser,
+    upsertItem,
     actualizarCantidad,
     eliminarItem,
-  } = useComandas(
-    usuario?.id !== 'admin' ? usuario?.id : null,
-    false
-  )
+  } = useComandas(usuario?.id !== 'admin' ? usuario?.id : null, false)
 
   // ── Todas las comandas (solo admin) ───────────────────────────────────────
   const {
@@ -101,7 +127,6 @@ export default function App() {
     setVista(VISTAS.MENU)
   }
 
-  // ── Desde VistaDetalle: upsert inmediato (sin carrito temporal) ───────────
   async function handleAnyadirAComanda(platoId, cantidad, nota) {
     return await upsertItem(platoId, cantidad, nota)
   }
@@ -117,24 +142,30 @@ export default function App() {
   }
 
   // ── App principal ─────────────────────────────────────────────────────────
-  // El fondo global (bg-cover/fondo.jpg) se aplica aquí con una capa oscura
-  // para que todas las vistas internas mantengan la estética.
   return (
-    <div
-      className="min-h-screen flex flex-col bg-cover bg-center bg-fixed"
-      style={{ backgroundImage: "url('/fondos/fondo.jpg')" }}
-    >
-      {/* Capa de oscurecimiento sobre el fondo */}
-      <div className="absolute inset-0 bg-black/70 pointer-events-none" />
+    <div className="min-h-screen flex flex-col relative">
+      {/* ── Fondos responsivos ── */}
+      <div
+        className="fixed inset-0 bg-cover bg-center transition-all duration-700 block md:hidden"
+        style={{ backgroundImage: `url('${fondoMovil}')` }}
+      />
+      <div
+        className="fixed inset-0 bg-cover bg-center transition-all duration-700 hidden md:block"
+        style={{ backgroundImage: `url('${fondoPc}')` }}
+      />
 
-      {/* Todo el contenido encima de la capa */}
-      <div className="relative flex flex-col flex-1">
+      {/* Capa de oscurecimiento */}
+      <div className="fixed inset-0 bg-black/72 pointer-events-none" />
+
+      {/* Contenido */}
+      <div className="relative flex flex-col flex-1 z-10">
         <NavBar
           usuario={usuario}
           esAdmin={esAdmin}
           vistaActual={vista}
           totalItems={misComandas.length}
           rtActivo={esAdmin ? rtAdmin : rtUser}
+          juegoHabilitado={!esAdmin && juegoHabilitado}
           onNavegar={v => { setPlatoDetalle(null); setVista(v) }}
           onLogout={handleLogout}
         />
@@ -176,10 +207,14 @@ export default function App() {
               rtActivo={rtAdmin}
             />
           )}
+
+          {vista === VISTAS.JUEGO && !esAdmin && (
+            <VistaJuego usuario={usuario} />
+          )}
         </main>
 
-        <footer className="border-t border-slate-800/30 py-4 px-4 mt-auto">
-          <p className="text-center text-slate-600 text-xs font-serif">
+        <footer className="border-t border-stone-800/30 py-4 px-4 mt-auto">
+          <p className="text-center text-stone-600 text-xs font-serif">
             Cuando las cigarras lloran · Higurashi no Naku Koro ni
           </p>
         </footer>

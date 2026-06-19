@@ -5,8 +5,6 @@
 export const ADMIN_PASSWORD = 'Naku'
 
 // ─── Personajes jugables ─────────────────────────────────────────────────────
-// Los avatares se sirven desde /public/avatares/<id>.png
-// Coloca tus imágenes en: public/avatares/keiichi.png, rena.png, etc.
 export const PERSONAJES = [
   {
     id: 'keiichi',
@@ -16,6 +14,10 @@ export const PERSONAJES = [
     borderColor: 'border-blue-700/50',
     textColor: 'text-blue-300',
     descripcion: 'El chico nuevo de Hinamizawa',
+    objeto: 'Bate de béisbol',
+    descripcionObjeto: 'Protege a un jugador del ataque nocturno del asesino.',
+    tipoAccion: 'proteger',
+    emoji: '⚾',
   },
   {
     id: 'rena',
@@ -25,6 +27,10 @@ export const PERSONAJES = [
     borderColor: 'border-pink-700/50',
     textColor: 'text-pink-300',
     descripcion: '¡Me lo llevo a casa!',
+    objeto: 'Machete',
+    descripcionObjeto: 'Si el pueblo la lincha por error, ejecuta al jugador que más votos le dio.',
+    tipoAccion: 'pasiva',
+    emoji: '🔪',
   },
   {
     id: 'mion',
@@ -34,6 +40,10 @@ export const PERSONAJES = [
     borderColor: 'border-emerald-700/50',
     textColor: 'text-emerald-300',
     descripcion: 'Líder del Club de Juegos',
+    objeto: 'Rotulador',
+    descripcionObjeto: 'Su voto diurno cuenta doble. Solo se usa durante la fase de votación.',
+    tipoAccion: 'votar_doble',
+    emoji: '✍️',
   },
   {
     id: 'shion',
@@ -43,6 +53,10 @@ export const PERSONAJES = [
     borderColor: 'border-violet-700/50',
     textColor: 'text-violet-300',
     descripcion: 'Gemela de Mion',
+    objeto: 'Táser',
+    descripcionObjeto: 'Paraliza a un personaje esta noche, anulando su acción.',
+    tipoAccion: 'paralizar',
+    emoji: '⚡',
   },
   {
     id: 'rika',
@@ -52,6 +66,10 @@ export const PERSONAJES = [
     borderColor: 'border-indigo-700/50',
     textColor: 'text-indigo-300',
     descripcion: 'Miko del Santuario Furude',
+    objeto: 'Fragmento de Tiempo',
+    descripcionObjeto: 'Sobrevive automáticamente al primer intento de asesinato nocturno.',
+    tipoAccion: 'pasiva',
+    emoji: '⏳',
   },
   {
     id: 'satoko',
@@ -61,6 +79,10 @@ export const PERSONAJES = [
     borderColor: 'border-amber-700/50',
     textColor: 'text-amber-300',
     descripcion: 'Maestra de las trampas',
+    objeto: 'Trampas',
+    descripcionObjeto: 'Revela en secreto el bando (Aldeano/Asesino) del personaje elegido.',
+    tipoAccion: 'revelar',
+    emoji: '🪤',
   },
 ]
 
@@ -78,4 +100,14 @@ export const VISTAS = {
   DETALLE: 'detalle',
   COMANDA: 'comanda',
   ADMIN:   'admin',
+  JUEGO:   'juego',
+}
+
+// ─── Fases del juego ──────────────────────────────────────────────────────────
+export const FASES = {
+  ESPERA:     'espera',
+  DIA:        'dia',
+  NOCHE:      'noche',
+  VOTACION:   'votacion',
+  FINALIZADO: 'finalizado',
 }
