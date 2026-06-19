@@ -75,7 +75,7 @@ export default function PantallaLogin({ onLogin, onAdminAccess }) {
         </div>
 
         {!modoAdmin ? (
-          <div className="card-dark p-6 glow-red space-y-6">
+          <div className="card-dark p-6 glow-sunset space-y-6">
             <p className="text-slate-400 text-sm text-center leading-relaxed">
               Elige tu personaje e introduce tu nombre.<br />
               <span className="text-red-400 text-xs">Oyashiro-sama te observa.</span>
