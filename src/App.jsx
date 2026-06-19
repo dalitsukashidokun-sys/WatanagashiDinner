@@ -66,12 +66,13 @@ export default function App() {
     return () => { supabase.removeChannel(canal) }
   }, [usuario])
 
-  // ── Fondos responsivos por vista ──────────────────────────────────────────
-  // menu_usuario → Fondomenu, resto → fondo base
-  const esVistaMenu = vista === VISTAS.MENU && !esAdmin
-  const fondoPc = esVistaMenu ? '/fondos/Fondomenu_pc.png' : '/fondos/fondo.png'
-  const fondoMovil = esVistaMenu ? '/fondos/Fondomenu_movil.png' : '/fondos/fondo2.png'
 
+// ── Fondos responsivos por vista ──────────────────────────────────────────
+// menu_usuario o comanda_usuario → Fondomenu, resto → fondo base
+const requiereFondoMenu = (vista === VISTAS.MENU || vista === VISTAS.COMANDA) && !esAdmin
+
+const fondoPc = requiereFondoMenu ? '/fondos/Fondomenu_pc.png' : '/fondos/fondo.png'
+const fondoMovil = requiereFondoMenu ? '/fondos/Fondomenu_movil.png' : '/fondos/fondo2.png'
 
   // ── Platos del menú ───────────────────────────────────────────────────────
   const { platos, cargando: cargandoPlatos } = usePlatos()
