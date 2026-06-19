@@ -14,9 +14,12 @@ export default function PanelAdmin({ comandas, cargando, totalPlatos, rtActivo }
   const [tab, setTab] = useState('comanda')
 
   return (
-    /* CORREGIDO: Se mantiene tu ruta /fondos/bgj_pc.jpg, pero se inyectan las propiedades indispensables de escalado y dimensiones */
-    <div className="min-h-screen w-full bg-[url(/bgj_movil.png)] md:bg-[url(/fondos/bgj_pc.jpg)] bg-cover bg-center bg-fixed animate-fade-in">
-      
+    <div className={`min-h-screen w-full bg-cover bg-center bg-fixed animate-fade-in ${
+      tab === 'juego'
+        ? 'bg-[url(/fondos/bgj_movil.jpg)] md:bg-[url(/fondos/bgj_pc.png)]'
+        : ''
+    }`}>
+
       {/* Capa de contraste oscura (bg-black/55) para que las métricas y los textos de administración sigan siendo legibles */}
       <div className="min-h-screen w-full bg-black/55 p-4 space-y-4">
 

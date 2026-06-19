@@ -30,8 +30,7 @@ export default function NavBar({
           {!esAdmin && (
             <>
               <NavBtn id={VISTAS.MENU}    label="Menú"       icon={<UtensilsCrossed size={15} />} vistaActual={vistaActual} onNavegar={onNavegar} />
-              <NavBtn id={VISTAS.COMANDA} label="Comanda"    icon={<ShoppingBag size={15} />}    vistaActual={vistaActual} onNavegar={onNavegar}
-                badge={totalItems > 0 ? totalItems : null} />
+              <NavBtn id={VISTAS.COMANDA} label="Comanda"    icon={<ShoppingBag size={15} />}    vistaActual={vistaActual} onNavegar={onNavegar} />
 
               {/* Botón juego: solo si habilitado */}
               {juegoHabilitado && (
