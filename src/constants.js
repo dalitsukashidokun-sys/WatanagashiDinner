@@ -62,15 +62,6 @@ export const PERSONAJES = [
     textColor: 'text-amber-300',
     descripcion: 'Maestra de las trampas',
   },
-  {
-    id: 'satoshi',
-    nombre: 'Houjou Satoshi',
-    avatar: '/avatares/satoshi.png',
-    color: 'from-teal-900/40 to-teal-950',
-    borderColor: 'border-teal-700/50',
-    textColor: 'text-teal-300',
-    descripcion: 'El hermano mayor de Satoko',
-  },
 ]
 
 // ─── Categorías del menú ─────────────────────────────────────────────────────

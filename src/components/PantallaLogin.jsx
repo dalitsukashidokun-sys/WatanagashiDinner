@@ -113,7 +113,7 @@ export default function PantallaLogin({ onLogin, onAdminAccess }) {
             
             {error && <p className="text-red-500 text-lg mb-6 bg-black/50 px-4 py-2 rounded">{error}</p>}
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-10 w-full max-w-6xl">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-10 w-full max-w-5xl">
               {PERSONAJES.map(p => (
                 <button
                   key={p.id}
