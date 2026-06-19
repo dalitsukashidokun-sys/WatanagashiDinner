@@ -95,10 +95,8 @@ export function useJuego() {
     const vivos = usuarios.filter(u => u.avatar !== 'admin')
     if (vivos.length === 0) return { error: 'No hay usuarios registrados.' }
 
-    // Elegir asesino aleatorio
     const idxAsesino = Math.floor(Math.random() * vivos.length)
     
-    // CORRECCIÓN TÁCTICA: Incluir ...u para satisfacer restricciones NOT NULL en el upsert
     const updates = vivos.map((u, i) => ({
       ...u, 
       bando: i === idxAsesino ? 'asesino' : 'aldeano',
@@ -109,7 +107,6 @@ export function useJuego() {
     const { error } = await supabase.from('usuarios').upsert(updates)
     if (error) return { error: error.message }
 
-    // Limpiar votos y acciones previas
     await supabase.from('votos').delete().gte('ronda', 0)
     await supabase.from('acciones_noche').delete().gte('ronda', 0)
     await supabase.from('log_juego').delete().gte('ronda', 0)
@@ -287,7 +284,7 @@ export function useJuego() {
         if (asesinado) {
           await supabase.from('usuarios').update({ vivo: false }).eq('avatar', objetivoId)
           await _logEvento(ronda, 'muerte_noche',
-            `${objetivo.nombre} fue asesinado/a durante la noche.`, true)
+            `${objetivo.nombre} fue asesinado/a during la noche.`, true)
 
           const vivosDespues = Object.values(estadoLocal).filter(u => u.vivo && u.avatar !== objetivoId)
           if (_comprobarVictoriaAsesino(vivosDespues)) {
@@ -302,11 +299,13 @@ export function useJuego() {
       }
     } else if (accionAsesino && actorAsesino?.paralizadoEstaNoche) {
       await _logEvento(ronda, 'asesino_paralizado',
-        'El asesino fue paralizado por Shion. No pudo actor esta noche.', true)
+        'El asesino fue paralizado por Shion. No pudo actuar esta noche.', true)
     }
 
     await _marcarAccionesProcesadas(accionesRonda)
-    await cambiarFase('votacion', 1)
+    
+    // ── CORRECCIÓN DE PACING: El amanecer ahora transporta al Día (Discusión) ──
+    await cambiarFase('dia', 1) 
     return { resultado: 'noche_procesada', error: null }
   }, [acciones, usuarios, estadoJuego, cambiarFase])
 

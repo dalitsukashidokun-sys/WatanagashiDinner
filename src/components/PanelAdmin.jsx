@@ -12,9 +12,9 @@ import { PERSONAJES } from '../constants'
 import { useJuego } from '../hooks/useJuego'
 
 /**
- * @param {Array}   comandas    - Todas las comandas (comida) con joins
+ * @param {Array}    comandas    - Todas las comandas (comida) con joins
  * @param {boolean} cargando    - Estado de carga de comandas
- * @param {number}  totalPlatos - Recuento global de platos
+ * @param {number}   totalPlatos - Recuento global de platos
  * @param {boolean} rtActivo    - Pulso Realtime de comandas
  */
 export default function PanelAdmin({ comandas, cargando, totalPlatos, rtActivo }) {
@@ -91,7 +91,7 @@ export default function PanelAdmin({ comandas, cargando, totalPlatos, rtActivo }
       )}
 
       {/* ════════════════════════════════════════════════════════════════════ */}
-      {/* SECCIÓN: JUEGO OCULTO                                              */}
+      {/* SECCIÓN: JUEGO OCULTO                                               */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       {seccionActiva === 'juego' && (
         <SeccionJuego juego={juego} />
@@ -101,9 +101,6 @@ export default function PanelAdmin({ comandas, cargando, totalPlatos, rtActivo }
   )
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// SECCIÓN COMANDA (extraída del PanelAdmin original)
-// ══════════════════════════════════════════════════════════════════════════════
 function SeccionComanda({ comandas, cargando, totalPlatos, desplegados, toggleUsuario }) {
   const porUsuario = comandas.reduce((acc, item) => {
     const uid = item.usuarios?.id
@@ -222,9 +219,6 @@ function SeccionComanda({ comandas, cargando, totalPlatos, desplegados, toggleUs
   )
 }
 
-// ══════════════════════════════════════════════════════════════════════════════
-// SECCIÓN JUEGO OCULTO
-// ══════════════════════════════════════════════════════════════════════════════
 function SeccionJuego({ juego }) {
   const {
     estadoJuego, usuarios, votos, acciones, log, cargando,
@@ -234,7 +228,7 @@ function SeccionJuego({ juego }) {
 
   const [mensaje, setMensaje]           = useState('')
   const [cargandoAccion, setCargandoAccion] = useState(false)
-  const [resetTarget, setResetTarget]   = useState(null) // { usuario, nuevaPass }
+  const [resetTarget, setResetTarget]   = useState(null)
   const [nuevaPassInput, setNuevaPassInput] = useState('')
   const [mostrarBandos, setMostrarBandos] = useState(false)
 
@@ -314,9 +308,7 @@ function SeccionJuego({ juego }) {
         </div>
       </div>
 
-      {/* ════════════════════════════════════════════════════════════════════ */}
-      {/* 1. INTERRUPTOR MAESTRO                                              */}
-      {/* ════════════════════════════════════════════════════════════════════ */}
+      {/* ── 1. INTERRUPTOR MAESTRO ── */}
       <div className="card-dark p-5">
         <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-widest mb-4">
           ⚡ Interruptor Maestro
@@ -336,9 +328,7 @@ function SeccionJuego({ juego }) {
             )}
             disabled={cargandoAccion}
             className={`relative inline-flex items-center h-8 w-14 rounded-full transition-colors duration-300 border-2 ${
-              habilitado
-                ? 'bg-red-700 border-red-500'
-                : 'bg-stone-800 border-stone-700'
+              habilitado ? 'bg-red-700 border-red-500' : 'bg-stone-800 border-stone-700'
             }`}
           >
             <span className={`inline-block w-5 h-5 bg-white rounded-full shadow transition-transform duration-300 ${
@@ -348,9 +338,7 @@ function SeccionJuego({ juego }) {
         </div>
       </div>
 
-      {/* ════════════════════════════════════════════════════════════════════ */}
-      {/* 2. CONTROL DE FASES                                                 */}
-      {/* ════════════════════════════════════════════════════════════════════ */}
+      {/* ── 2. CONTROL DE FASES (CORREGIDO) ── */}
       <div className="card-dark p-5">
         <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-widest mb-4">
           🎮 Control de Fases
@@ -366,27 +354,27 @@ function SeccionJuego({ juego }) {
             onClick={() => ejecutar(asignarRoles, 'Roles asignados. El juego está listo.')}
           />
 
-          {/* Iniciar Día → fase 'dia' */}
+          {/* Iniciar Día → Habilitado en 'espera', 'noche' o 'votacion' como rescate manual */}
           <BtnFase
             label="Iniciar Día"
             descripcion="Los jugadores pueden hablar libremente. Avanza a Votación cuando lo decidas."
             icon={<Sun size={15} />}
             color="amber"
-            disabled={cargandoAccion || fase === 'espera'}
+            disabled={cargandoAccion || (fase !== 'espera' && fase !== 'noche' && fase !== 'votacion')}
             onClick={() => ejecutar(() => cambiarFase('dia'), 'Fase de día iniciada.')}
           />
 
-          {/* Iniciar Votación → fase 'votacion' */}
+          {/* Iniciar Votación → Habilitado únicamente durante el Día */}
           <BtnFase
             label="Iniciar Votación Diurna"
             descripcion="Los usuarios vivos pueden votar. Aparece el botón de voto en su pantalla."
             icon={<Vote size={15} />}
             color="orange"
-            disabled={cargandoAccion || fase === 'espera'}
+            disabled={cargandoAccion || fase !== 'dia'}
             onClick={() => ejecutar(() => cambiarFase('votacion'), 'Votación abierta.')}
           />
 
-          {/* Procesar Votación */}
+          {/* Procesar Votación → Habilitado únicamente durante la Votación */}
           <BtnFase
             label="Procesar Votos del Día"
             descripcion={`${votosRonda.length} votos recibidos. Calcula el más votado y aplica consecuencias.`}
@@ -396,17 +384,17 @@ function SeccionJuego({ juego }) {
             onClick={() => ejecutar(procesarVotacion, 'Votación procesada.')}
           />
 
-          {/* Iniciar Noche → fase 'noche' */}
+          {/* Iniciar Noche → Rescate manual si se desea saltar votaciones */}
           <BtnFase
             label="Iniciar Noche"
             descripcion="Los jugadores eligen en secreto el objetivo de su objeto."
             icon={<Moon size={15} />}
             color="indigo"
-            disabled={cargandoAccion || fase === 'espera'}
+            disabled={cargandoAccion || (fase !== 'dia' && fase !== 'votacion')}
             onClick={() => ejecutar(() => cambiarFase('noche'), 'Fase de noche iniciada.')}
           />
 
-          {/* Procesar Noche */}
+          {/* Procesar Noche → Habilitado únicamente durante la Noche */}
           <BtnFase
             label="Procesar Noche"
             descripcion={`${accionesRonda.length} acciones recibidas. Ejecuta cola: Táser → Protección → Asesinato → Pasivas.`}
@@ -418,9 +406,7 @@ function SeccionJuego({ juego }) {
         </div>
       </div>
 
-      {/* ════════════════════════════════════════════════════════════════════ */}
-      {/* 3. TABLERO: JUGADORES                                               */}
-      {/* ════════════════════════════════════════════════════════════════════ */}
+      {/* ── 3. TABLERO: JUGADORES ── */}
       <div className="card-dark p-5">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-widest">
@@ -452,13 +438,11 @@ function SeccionJuego({ juego }) {
                     ? `border-stone-800/60 ${p?.color ? `bg-gradient-to-r ${p.color} bg-opacity-30` : 'bg-stone-900/40'}`
                     : 'border-stone-900/40 bg-stone-950/50 opacity-50'
                 }`}>
-                  {/* Avatar */}
                   <div className={`w-8 h-8 rounded-lg overflow-hidden shrink-0 border ${u.vivo ? 'border-stone-700/50' : 'border-stone-800/30'}`}>
                     <img src={p?.avatar} alt={u.nombre} className="w-full h-full object-cover"
                       onError={e => { e.target.style.display = 'none' }} />
                   </div>
 
-                  {/* Nombre y estado */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className={`text-sm font-medium ${u.vivo ? (p?.textColor || 'text-stone-300') : 'text-stone-600 line-through'}`}>
@@ -476,15 +460,12 @@ function SeccionJuego({ juego }) {
                           {u.bando === 'asesino' ? '🗡 Asesino' : '🕊 Aldeano'}
                         </span>
                       )}
-                      {u.objeto_usado && (
-                        <span className="text-xs text-stone-600">objeto usado</span>
-                      )}
+                      {u.objeto_usado && <span className="text-xs text-stone-600">objeto usado</span>}
                       {haVotado && <span className="text-xs text-amber-600">✓ votó</span>}
                       {haActuado && <span className="text-xs text-indigo-500">✓ actuó</span>}
                     </div>
                   </div>
 
-                  {/* Votos recibidos esta ronda */}
                   {pesoRecibido > 0 && (
                     <div className="text-center shrink-0">
                       <span className="text-lg font-bold text-red-400 tabular-nums">{pesoRecibido}</span>
@@ -498,9 +479,7 @@ function SeccionJuego({ juego }) {
         )}
       </div>
 
-      {/* ════════════════════════════════════════════════════════════════════ */}
-      {/* 4. GESTIÓN DE CREDENCIALES                                          */}
-      {/* ════════════════════════════════════════════════════════════════════ */}
+      {/* ── 4. GESTIÓN DE CREDENCIALES ── */}
       <div className="card-dark p-5">
         <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-widest mb-4">
           🔐 Gestión de Credenciales
@@ -518,7 +497,6 @@ function SeccionJuego({ juego }) {
               <div key={p.id} className={`rounded-xl border overflow-hidden transition-all ${
                 estaExpandido ? 'border-amber-800/50' : 'border-stone-800/60'
               }`}>
-                {/* Cabecera */}
                 <div className="flex items-center justify-between px-3 py-2.5 bg-stone-900/40">
                   <div className="flex items-center gap-3">
                     <div className="w-7 h-7 rounded-md overflow-hidden bg-stone-800 shrink-0">
@@ -528,11 +506,7 @@ function SeccionJuego({ juego }) {
                     <div>
                       <span className={`text-sm font-medium ${p.textColor}`}>{p.nombre}</span>
                       <p className="text-xs text-stone-600 mt-0.5">
-                        {!usuarioDB
-                          ? 'Sin registrar'
-                          : !usuarioDB.password
-                          ? 'Sin contraseña'
-                          : 'Registrado ✓'}
+                        {!usuarioDB ? 'Sin registrar' : !usuarioDB.password ? 'Sin contraseña' : 'Registrado ✓'}
                       </p>
                     </div>
                   </div>
@@ -550,7 +524,6 @@ function SeccionJuego({ juego }) {
                   )}
                 </div>
 
-                {/* Formulario de reset expandible */}
                 {estaExpandido && (
                   <div className="px-3 pb-3 pt-2 bg-stone-950/50 animate-slide-up">
                     <div className="flex gap-2">
@@ -614,7 +587,6 @@ function SeccionJuego({ juego }) {
   )
 }
 
-// ── Botón de fase ──────────────────────────────────────────────────────────────
 function BtnFase({ label, descripcion, icon, color, disabled, onClick }) {
   const colores = {
     amber:  'border-amber-900/40 hover:border-amber-700/60 text-amber-400 hover:bg-amber-950/30',
@@ -628,7 +600,7 @@ function BtnFase({ label, descripcion, icon, color, disabled, onClick }) {
       onClick={onClick}
       disabled={disabled}
       className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border bg-stone-950/40 transition-all text-left
-        disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.99]
+        disabled:opacity-10 disabled:cursor-not-allowed active:scale-[0.99]
         ${colores[color] || colores.amber}`}
     >
       <span className="shrink-0">{icon}</span>
@@ -641,7 +613,6 @@ function BtnFase({ label, descripcion, icon, color, disabled, onClick }) {
   )
 }
 
-// ── Tarjeta de métrica ─────────────────────────────────────────────────────────
 function MetricaCard({ icono, label, valor, sufijo, color, bg, border }) {
   return (
     <div className={`card-dark p-4 ${bg} border ${border}`}>
