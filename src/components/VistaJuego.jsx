@@ -64,8 +64,9 @@ export default function VistaJuego({ usuario }) {
   // ── Juego no habilitado (Con soporte de fondos duales y overlay) ─────────
   if (!estadoJuego?.juego_habilitado) {
     return (
-      <div className="min-h-screen w-full bg-[url(/fondos/bgj_movil.png)] md:bg-[url(/fondos/bgj_pc.png)] bg-cover bg-center bg-fixed animate-fade-in">
-        <div className="min-h-screen bg-black/60 flex flex-col items-center justify-center p-4 text-center space-y-4">
+      <div className="relative -mx-4 sm:-mx-6 -my-6 sm:-my-8 min-h-[calc(100vh-3.5rem)] animate-fade-in">
+        <div className="fixed inset-0 -z-10 bg-[url(/fondos/bgj_movil.png)] md:bg-[url(/fondos/bgj_pc.png)] bg-cover bg-center bg-fixed" />
+        <div className="min-h-[calc(100vh-3.5rem)] bg-black/60 flex flex-col items-center justify-center p-4 text-center space-y-4">
           <div className="text-7xl animate-pulse-slow">🦗</div>
           <h2 className="font-serif text-2xl text-stone-300">Las cigarras guardan silencio</h2>
           <p className="text-stone-500 text-sm max-w-xs">
@@ -79,8 +80,9 @@ export default function VistaJuego({ usuario }) {
   // ── Muerto: pantalla de espectador (Con soporte de fondos duales y overlay) ──
   if (!estoyVivo) {
     return (
-      <div className="min-h-screen w-full bg-[url(/fondos/bgj_movil.png)] md:bg-[url(/fondos/bgj_pc.png)] bg-cover bg-center bg-fixed animate-fade-in">
-        <div className="min-h-screen bg-black/60 p-4 space-y-5">
+      <div className="relative -mx-4 sm:-mx-6 -my-6 sm:-my-8 min-h-[calc(100vh-3.5rem)] animate-fade-in">
+        <div className="fixed inset-0 -z-10 bg-[url(/fondos/bgj_movil.png)] md:bg-[url(/fondos/bgj_pc.png)] bg-cover bg-center bg-fixed" />
+        <div className="min-h-[calc(100vh-3.5rem)] bg-black/60 p-4 space-y-5">
           <div className="card-dark p-8 text-center space-y-4">
             <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-red-900/40 mx-auto grayscale opacity-50">
               <img src={personaje?.avatar} alt={usuario.nombre} className="w-full h-full object-cover" />
@@ -102,8 +104,9 @@ export default function VistaJuego({ usuario }) {
 
   // ── Pantalla de Jugador Activo (Con soporte de fondos duales y overlay) ──
   return (
-    <div className="min-h-screen w-full bg-[url(/fondos/bgj_movil.png)] md:bg-[url(/fondos/bgj_pc.png)] bg-cover bg-center bg-fixed animate-fade-in">
-      <div className="min-h-screen bg-black/60 p-4 space-y-4">
+    <div className="relative -mx-4 sm:-mx-6 -my-6 sm:-my-8 min-h-[calc(100vh-3.5rem)] animate-fade-in">
+      <div className="fixed inset-0 -z-10 bg-[url(/fondos/bgj_movil.png)] md:bg-[url(/fondos/bgj_pc.png)] bg-cover bg-center bg-fixed" />
+      <div className="min-h-[calc(100vh-3.5rem)] bg-black/60 p-4 space-y-4">
 
         {/* ── Mi identidad ── */}
         <div className={`card-dark p-5 bg-gradient-to-r ${personaje?.color || ''}`}>
