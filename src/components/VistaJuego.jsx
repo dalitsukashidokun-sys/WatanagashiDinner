@@ -64,7 +64,7 @@ export default function VistaJuego({ usuario }) {
   // ── Juego no habilitado (Con soporte de fondos duales y overlay) ─────────
   if (!estadoJuego?.juego_habilitado) {
     return (
-      <div className="min-h-screen w-full bg-[url(/bgj_movil.jpg)] md:bg-[url(/bgj_pc.jpg)] bg-cover bg-center bg-fixed animate-fade-in">
+      <div className="min-h-screen w-full bg-[url(/bgj_movil.jpg)] md:bg-[url(/bgj_pc.png)] bg-cover bg-center bg-fixed animate-fade-in">
         <div className="min-h-screen bg-black/60 flex flex-col items-center justify-center p-4 text-center space-y-4">
           <div className="text-7xl animate-pulse-slow">🦗</div>
           <h2 className="font-serif text-2xl text-stone-300">Las cigarras guardan silencio</h2>
@@ -79,7 +79,7 @@ export default function VistaJuego({ usuario }) {
   // ── Muerto: pantalla de espectador (Con soporte de fondos duales y overlay) ──
   if (!estoyVivo) {
     return (
-      <div className="min-h-screen w-full bg-[url(/bgj_movil.jpg)] md:bg-[url(/bgj_pc.jpg)] bg-cover bg-center bg-fixed animate-fade-in">
+      <div className="min-h-screen w-full bg-[url(/bgj_movil.jpg)] md:bg-[url(/bgj_pc.png)] bg-cover bg-center bg-fixed animate-fade-in">
         <div className="min-h-screen bg-black/60 p-4 space-y-5">
           <div className="card-dark p-8 text-center space-y-4">
             <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-red-900/40 mx-auto grayscale opacity-50">
@@ -102,7 +102,7 @@ export default function VistaJuego({ usuario }) {
 
   // ── Pantalla de Jugador Activo (Con soporte de fondos duales y overlay) ──
   return (
-    <div className="min-h-screen w-full bg-[url(/bgj_movil.jpg)] md:bg-[url(/bgj_pc.jpg)] bg-cover bg-center bg-fixed animate-fade-in">
+    <div className="min-h-screen w-full bg-[url(/bgj_movil.jpg)] md:bg-[url(/bgj_pc.png)] bg-cover bg-center bg-fixed animate-fade-in">
       <div className="min-h-screen bg-black/60 p-4 space-y-4">
 
         {/* ── Mi identidad ── */}
