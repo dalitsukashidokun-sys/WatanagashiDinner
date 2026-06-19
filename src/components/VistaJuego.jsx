@@ -97,7 +97,7 @@ export default function VistaJuego({ usuario }) {
   }
 
   return (
-    <div className="animate-fade-in space-y-4">
+    <div className="min-h-screen bg-[url('/bgj_movil.jpg')] md:bg-[url('/bgj_pc.png')] bg-cover bg-center bg-fixed animate-fade-in space-y-4">
 
       {/* ── Mi identidad ── */}
       <div className={`card-dark p-5 bg-gradient-to-r ${personaje?.color || ''}`}>
