@@ -1,131 +1,126 @@
 // src/components/NavBar.jsx
-// ─── Barra de Navegación Superior ────────────────────────────────────────────
-// Usa la imagen de avatar del personaje en lugar de emoji.
+// ─── Barra de Navegación v2 ───────────────────────────────────────────────────
+// Añade el botón "Juego" (parpadeante en rojo) cuando juegoHabilitado=true
 
-import { LogOut, ShoppingBag, UtensilsCrossed, LayoutDashboard } from 'lucide-react'
-import { PERSONAJES, VISTAS } from '../constants'
+import { ShoppingBag, LayoutGrid, User, LogOut, Swords, Settings } from 'lucide-react'
+import { VISTAS, PERSONAJES } from '../constants'
 
-/**
- * @param {Object}   usuario      - Usuario en sesión
- * @param {boolean}  esAdmin      - Muestra acceso al panel admin
- * @param {string}   vistaActual  - Vista activa para resaltar la pestaña
- * @param {number}   totalItems   - Número de tipos de platos en comanda (para badge)
- * @param {boolean}  rtActivo     - Indicador de actividad Realtime
- * @param {Function} onNavegar    - Callback(vista)
- * @param {Function} onLogout     - Callback para cerrar sesión
- */
 export default function NavBar({
   usuario,
   esAdmin,
   vistaActual,
   totalItems,
   rtActivo,
+  juegoHabilitado,
   onNavegar,
   onLogout,
 }) {
   const personaje = PERSONAJES.find(p => p.id === usuario?.avatar)
 
-  const navItems = [
-    {
-      id: VISTAS.MENU,
-      label: 'Menú',
-      icono: <UtensilsCrossed size={16} />,
-      visible: !esAdmin,
-    },
-    {
-      id: VISTAS.COMANDA,
-      label: 'Mi comanda',
-      icono: <ShoppingBag size={16} />,
-      badge: totalItems > 0 ? totalItems : null,
-      visible: !esAdmin,
-    },
-    {
-      id: VISTAS.ADMIN,
-      label: 'Panel',
-      icono: <LayoutDashboard size={16} />,
-      visible: esAdmin,
-    },
-  ]
+  const navBtn = (vista, icon, label, extra = '') => (
+    <button
+      onClick={() => onNavegar(vista)}
+      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${extra}
+        ${vistaActual === vista
+          ? 'bg-stone-800/80 text-stone-100 border border-stone-700/50'
+          : 'text-stone-500 hover:text-stone-300 hover:bg-stone-800/40'
+        }`}
+    >
+      {icon}
+      <span className="hidden sm:inline">{label}</span>
+    </button>
+  )
 
   return (
-    <header className="sticky top-0 z-40 bg-slate-950/95 backdrop-blur-sm border-b border-slate-800/80">
-      <div className="flex items-center justify-between h-14 px-4 max-w-5xl mx-auto">
+    <header className="sticky top-0 z-40 border-b border-stone-800/50 backdrop-blur-md bg-stone-950/80">
+      <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between gap-2">
 
-        {/* Logo */}
-        <div className="flex items-center gap-2.5">
-          <span className="text-xl">⛩️</span>
-          <div className="hidden sm:block">
-            <span className="font-serif text-sm text-gradient-red font-semibold">Hinamizawa</span>
-            <span className="text-slate-600 text-xs ml-2">Comandas</span>
-          </div>
-        </div>
+        {/* ── Logo / título ── */}
+        <button
+          onClick={() => onNavegar(VISTAS.MENU)}
+          className="font-serif text-stone-200 text-base font-semibold hover:text-white transition-colors shrink-0 tracking-wide"
+        >
+          <span className="hidden sm:inline">Higurashi · Festival</span>
+          <span className="sm:hidden text-red-500">⛩</span>
+        </button>
 
-        {/* Navegación central */}
-        <nav className="flex items-center gap-1">
-          {navItems.filter(n => n.visible).map(item => (
+        {/* ── Navegación central ── */}
+        {!esAdmin && (
+          <nav className="flex items-center gap-1">
+            {navBtn(VISTAS.MENU, <LayoutGrid size={16} />, 'Menú')}
+            {navBtn(VISTAS.COMANDA,
+              <div className="relative">
+                <ShoppingBag size={16} />
+                {totalItems > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
+                    {totalItems > 9 ? '9+' : totalItems}
+                  </span>
+                )}
+              </div>,
+              'Comanda'
+            )}
+
+            {/* ── Botón Juego: solo visible si juegoHabilitado ── */}
+            {juegoHabilitado && (
+              <button
+                onClick={() => onNavegar(VISTAS.JUEGO)}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150
+                  ${vistaActual === VISTAS.JUEGO
+                    ? 'bg-red-900/60 text-red-300 border border-red-700/50'
+                    : 'text-red-500 hover:text-red-400 hover:bg-red-950/40 border border-red-900/40 animate-flicker'
+                  }`}
+              >
+                <Swords size={16} />
+                <span className="hidden sm:inline">Juego</span>
+              </button>
+            )}
+          </nav>
+        )}
+
+        {/* Admin: tab de Panel */}
+        {esAdmin && (
+          <nav className="flex items-center gap-1">
             <button
-              key={item.id}
-              onClick={() => onNavegar(item.id)}
-              className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm
-                font-medium transition-all duration-150 active:scale-95
-                ${vistaActual === item.id
-                  ? 'bg-red-900/30 text-red-300 border border-red-900/50'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/80'
-                }`}
+              onClick={() => onNavegar(VISTAS.ADMIN)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-amber-400 hover:bg-amber-950/30 transition-all"
             >
-              {item.icono}
-              <span className="hidden sm:inline">{item.label}</span>
-              {item.badge && (
-                <span className="absolute -top-1 -right-1 bg-red-700 text-white text-[10px]
-                  font-bold w-4 h-4 rounded-full flex items-center justify-center">
-                  {item.badge > 9 ? '9+' : item.badge}
-                </span>
-              )}
+              <Settings size={16} />
+              <span className="hidden sm:inline">Panel Admin</span>
             </button>
-          ))}
-        </nav>
+          </nav>
+        )}
 
-        {/* Derecha: avatar + nombre + logout */}
-        <div className="flex items-center gap-2">
+        {/* ── Perfil y logout ── */}
+        <div className="flex items-center gap-2 shrink-0">
           {/* Indicador Realtime */}
-          <span
-            title={rtActivo ? 'Sincronizando' : 'Conectado'}
-            className={`w-1.5 h-1.5 rounded-full transition-all duration-300 hidden sm:block
-              ${rtActivo
-                ? 'bg-emerald-400 shadow-[0_0_5px_rgba(52,211,153,0.7)]'
-                : 'bg-slate-700'
-              }`}
-          />
-
-          {!esAdmin ? (
-            <div className="flex items-center gap-1.5">
-              {/* Avatar del personaje (imagen local) */}
-              <div className="w-7 h-7 rounded-full overflow-hidden bg-slate-800 border border-slate-700 shrink-0">
-                <img
-                  src={personaje?.avatar}
-                  alt={personaje?.nombre}
-                  className="w-full h-full object-cover"
-                  onError={e => { e.target.style.display = 'none' }}
-                />
-              </div>
-              <span className="text-sm text-slate-300 hidden sm:inline max-w-24 truncate">
-                {usuario?.nombre}
-              </span>
-            </div>
-          ) : (
-            <span className="text-xs text-amber-500 border border-amber-800/50
-              bg-amber-950/30 px-2 py-0.5 rounded-md font-medium">
-              Admin
-            </span>
+          {rtActivo && (
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
           )}
 
+          {/* Avatar y nombre */}
+          <div className="flex items-center gap-2">
+            {personaje ? (
+              <div className={`w-7 h-7 rounded-full overflow-hidden border ${personaje.borderColor} bg-stone-800 shrink-0`}>
+                <img src={personaje.avatar} alt={usuario.nombre} className="w-full h-full object-cover"
+                  onError={e => { e.target.style.display = 'none' }} />
+              </div>
+            ) : (
+              <div className="w-7 h-7 rounded-full bg-stone-800 border border-stone-700 flex items-center justify-center shrink-0">
+                <User size={14} className="text-stone-500" />
+              </div>
+            )}
+            <span className="text-sm text-stone-400 hidden md:inline truncate max-w-[120px]">
+              {usuario.nombre}
+            </span>
+          </div>
+
+          {/* Logout */}
           <button
             onClick={onLogout}
-            className="btn-ghost flex items-center gap-1.5 text-xs px-2.5 py-1.5"
             title="Cerrar sesión"
+            className="p-1.5 text-stone-600 hover:text-red-400 hover:bg-red-950/30 rounded-lg transition-all"
           >
-            <LogOut size={14} />
-            <span className="hidden sm:inline">Salir</span>
+            <LogOut size={15} />
           </button>
         </div>
       </div>
