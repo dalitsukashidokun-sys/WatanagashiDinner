@@ -65,9 +65,13 @@ export default function App() {
 
   // ── FONDOS UNIFICADOS (Idénticos a la Vista de Detalle) ───────────────────
   // Se fuerza a que todas las pantallas utilicen el fondo base original
-  const fondoPc = '/fondos/fondo.png'
-  const fondoMovil = '/fondos/fondo2.png'
+// ── Fondos responsivos por vista ──────────────────────────────────────────
+  // Si está en Menú, Detalle o Comanda, se activa el set "Fondomenu"
+  const esSeccionGastronomica = 
+    (vista === VISTAS.MENU || vista === VISTAS.DETALLE || vista === VISTAS.COMANDA) && !esAdmin
 
+  const fondoPc = esSeccionGastronomica ? '/fondos/Fondomenu_pc.png' : '/fondos/fondo.png'
+  const fondoMovil = esSeccionGastronomica ? '/fondos/Fondomenu_movil.png' : '/fondos/fondo2.png'
   // ── Platos del menú ───────────────────────────────────────────────────────
   const { platos, cargando: cargandoPlatos } = usePlatos()
 
