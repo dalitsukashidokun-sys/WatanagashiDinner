@@ -4,10 +4,9 @@ import { supabase } from '../supabaseClient'
 import { PERSONAJES, ADMIN_PASSWORD } from '../constants'
 
 export default function PantallaLogin({ onLogin, onAdminAccess }) {
-  // Fases: 'inicio' | 'codigo' | 'nombre' | 'avatar'
+  // Fases: 'inicio' | 'codigo' | 'avatar'
   const [fase, setFase] = useState('inicio')
   
-  const [nombre, setNombre] = useState('')
   const [codigo, setCodigo] = useState('')
   const [error, setError] = useState('')
   const [cargando, setCargando] = useState(false)
@@ -25,24 +24,15 @@ export default function PantallaLogin({ onLogin, onAdminAccess }) {
     }
   }
 
-  // ── Transición a Avatares ──
-  const avanzarAAvatares = () => {
-    if (!nombre.trim() || nombre.trim().length < 2) {
-      setError('Debes introducir un nombre válido.')
-      return
-    }
-    setError('')
-    setFase('avatar')
-  }
-
-  // ── Inserción Final en Base de Datos ──
-  const seleccionarPersonajeYEntrar = async (personajeId) => {
+  // ── Inserción Final en Base de Datos Ligada al Personaje ──
+  const seleccionarPersonajeYEntrar = async (personaje) => {
     setCargando(true)
     setError('')
     try {
+      // El nombre del usuario será directamente el nombre del personaje elegido
       const { data, error: err } = await supabase
         .from('usuarios')
-        .insert({ nombre: nombre.trim(), avatar: personajeId })
+        .insert({ nombre: personaje.nombre, avatar: personaje.id })
         .select()
         .single()
       
@@ -78,10 +68,10 @@ export default function PantallaLogin({ onLogin, onAdminAccess }) {
           </div>
         )}
 
-        {/* ── FASE 1: MENÚ PRINCIPAL (Desplazado al extremo inferior en PC) ── */}
+        {/* ── FASE 1: MENÚ PRINCIPAL ── */}
         {fase === 'inicio' && (
           <div className="flex flex-col gap-4 items-center animate-slide-up mt-20 md:mt-96">
-            <button className={btnVN} onClick={() => setFase('nombre')}>
+            <button className={btnVN} onClick={() => setFase('avatar')}>
               Iniciar Pedido
             </button>
             <button className={btnVN} onClick={() => {}}>
@@ -114,37 +104,11 @@ export default function PantallaLogin({ onLogin, onAdminAccess }) {
           </div>
         )}
 
-        {/* ── FASE 3: INTRODUCIR NOMBRE ── */}
-        {fase === 'nombre' && (
-          <div className="flex flex-col items-center gap-6 animate-fade-in bg-black/70 p-10 rounded-2xl border border-stone-700/50 backdrop-blur-md shadow-2xl">
-            <h2 className="text-stone-200 font-serif text-2xl tracking-wide">¿Cuál es tu nombre?</h2>
-            <input
-              type="text"
-              className="w-80 bg-transparent border-b-2 border-stone-500 text-center text-2xl text-white py-2 focus:outline-none focus:border-red-500 transition-colors"
-              placeholder="..."
-              value={nombre}
-              onChange={(e) => { setNombre(e.target.value); setError(''); }}
-              onKeyDown={(e) => e.key === 'Enter' && avanzarAAvatares()}
-              autoFocus
-              maxLength={20}
-            />
-            {error && <p className="text-red-500 text-sm">{error}</p>}
-            <div className="flex gap-6 mt-4">
-              <button className="text-stone-500 hover:text-stone-300 transition-colors uppercase tracking-widest text-sm" onClick={() => setFase('inicio')}>
-                Cancelar
-              </button>
-              <button className="text-stone-100 hover:text-red-400 font-bold transition-colors uppercase tracking-widest text-sm" onClick={avanzarAAvatares}>
-                Siguiente
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ── FASE 4: SELECCIÓN DE AVATAR (ENFOQUE TOTAL) ── */}
+        {/* ── FASE 3: SELECCIÓN DE AVATAR (ENFOQUE TOTAL) ── */}
         {fase === 'avatar' && (
           <div className="w-full flex flex-col items-center animate-fade-in">
             <h2 className="text-4xl md:text-5xl font-serif text-stone-100 mb-12 drop-shadow-[0_2px_10px_rgba(255,0,0,0.5)]">
-              Elige tu apariencia, {nombre}
+              Elige tu personaje
             </h2>
             
             {error && <p className="text-red-500 text-lg mb-6 bg-black/50 px-4 py-2 rounded">{error}</p>}
@@ -154,7 +118,7 @@ export default function PantallaLogin({ onLogin, onAdminAccess }) {
                 <button
                   key={p.id}
                   disabled={cargando}
-                  onClick={() => seleccionarPersonajeYEntrar(p.id)}
+                  onClick={() => seleccionarPersonajeYEntrar(p)}
                   className={`
                     relative group overflow-hidden rounded-2xl aspect-square border-2 border-transparent
                     hover:border-red-600 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(220,38,38,0.4)]
@@ -180,10 +144,10 @@ export default function PantallaLogin({ onLogin, onAdminAccess }) {
 
             <button 
               className="mt-16 text-stone-500 hover:text-stone-300 uppercase tracking-widest text-sm transition-colors"
-              onClick={() => setFase('nombre')}
+              onClick={() => setFase('inicio')}
               disabled={cargando}
             >
-              ← Volver
+              ← Volver al menú
             </button>
           </div>
         )}
