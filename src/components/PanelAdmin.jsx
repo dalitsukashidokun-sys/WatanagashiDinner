@@ -15,7 +15,7 @@ export default function PanelAdmin({ comandas, cargando, totalPlatos, rtActivo }
 
   return (
     /* MODIFICADO: Se añaden fondos responsivos, bg-cover, bg-center y un padding/p-4 opcional para que respire el fondo */
-    <div className="animate-fade-in space-y-4 bg-[url('/bgj_movil.png')] md:bg-[url('/fondos/bgj_pc.png')] bg-cover bg-center p-4 rounded-2xl">
+    <div className="animate-fade-in space-y-4 bg-[url('/bgj_movil.jpg')] md:bg-[url('/fondos/bgj_pc.png')] bg-cover bg-center p-4 rounded-2xl">
 
       {/* ── Cabecera ── */}
       <div className="flex items-center justify-between flex-wrap gap-3">
