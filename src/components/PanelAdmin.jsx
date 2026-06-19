@@ -14,7 +14,8 @@ export default function PanelAdmin({ comandas, cargando, totalPlatos, rtActivo }
   const [tab, setTab] = useState('comanda')
 
   return (
-    <div className="animate-fade-in space-y-4">
+    /* MODIFICADO: Se añaden fondos responsivos, bg-cover, bg-center y un padding/p-4 opcional para que respire el fondo */
+    <div className="animate-fade-in space-y-4 bg-[url('/bgj_movil.png')] md:bg-[url('/fondos/bgj_pc.png')] bg-cover bg-center p-4 rounded-2xl">
 
       {/* ── Cabecera ── */}
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -266,33 +267,29 @@ function SeccionJuego() {
 
       {/* ── 1. Interruptor maestro ── */}
       <div className="card-dark p-5">
-  <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-widest mb-4">⚡ Interruptor Maestro</h3>
-  <div className="flex items-center justify-between gap-4">
-    <div>
-      <p className="text-stone-200 text-sm font-medium">Pantalla del Juego</p>
-      <p className="text-stone-500 text-xs mt-0.5">
-        {habilitado
-          ? 'El botón "Juego" parpadea en rojo para los usuarios.'
-          : 'Los usuarios no ven la sección de juego.'}
-      </p>
-    </div>
-    
-    {/* CORRECCIÓN: Invocación explícita de la función */}
-    <button 
-  onClick={() => exec(toggleJuegoHabilitado, habilitado ? 'Juego desactivado.' : 'Juego activado.')}
-  disabled={busy}
-  // Añadimos 'flex items-center' para asegurar alineación vertical automática
-  className={`relative flex items-center flex-shrink-0 h-8 w-14 rounded-full transition-colors duration-300 border-2 ${
-    habilitado ? 'bg-red-700 border-red-500' : 'bg-stone-800 border-stone-700'
-  }`}
->
-  {/* Ajuste: usamos left-0.5 y translate-x-6 para compensar el borde */}
-  <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300 ${
-    habilitado ? 'translate-x-6' : 'translate-x-0'
-  }`} />
-</button>
-  </div>
-</div>
+        <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-widest mb-4">⚡ Interruptor Maestro</h3>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-stone-200 text-sm font-medium">Pantalla del Juego</p>
+            <p className="text-stone-500 text-xs mt-0.5">
+              {habilitado
+                ? 'El botón "Juego" parpadea en rojo para los usuarios.'
+                : 'Los usuarios no ven la sección de juego.'}
+            </p>
+          </div>
+          <button 
+            onClick={() => exec(toggleJuegoHabilitado, habilitado ? 'Juego desactivado.' : 'Juego activado.')}
+            disabled={busy}
+            className={`relative flex items-center flex-shrink-0 h-8 w-14 rounded-full transition-colors duration-300 border-2 ${
+              habilitado ? 'bg-red-700 border-red-500' : 'bg-stone-800 border-stone-700'
+            }`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300 ${
+              habilitado ? 'translate-x-6' : 'translate-x-0'
+            }`} />
+          </button>
+        </div>
+      </div>
 
       {/* ── 2. Control de fases ── */}
       <div className="card-dark p-5">
@@ -303,16 +300,14 @@ function SeccionJuego() {
             color="amber" disabled={busy}
             onClick={() => exec(asignarRoles, 'Roles asignados. El juego está listo.')} />
 
-        <BtnAccion 
-  icon={<Sun size={14} />} 
-  label="Iniciar Día"
-  desc="Inicia la fase activa del festival."
-  color="amber" 
-  // CORRECCIÓN: Permitimos pulsar si es fase 'espera', 'noche' o 'votacion'
-  // Solo bloqueamos si es 'dia' (porque ya lo es) o está ocupado (busy)
-  disabled={busy || fase === 'dia'} 
-  onClick={() => exec(() => cambiarFase('dia'), 'Fase de día iniciada.')} 
-/>
+          <BtnAccion 
+            icon={<Sun size={14} />} 
+            label="Iniciar Día"
+            desc="Inicia la fase activa del festival."
+            color="amber" 
+            disabled={busy || fase === 'dia'} 
+            onClick={() => exec(() => cambiarFase('dia'), 'Fase de día iniciada.')} 
+          />
           <BtnAccion icon={<Vote size={14} />} label="Abrir Votación"
             desc="Aparece el panel de voto en las pantallas de los jugadores vivos."
             color="orange" disabled={busy || fase === 'espera'}
@@ -515,7 +510,6 @@ function BtnAccion({ icon, label, desc, color, disabled, onClick }) {
     violet: 'border-violet-900/40 hover:border-violet-700/50 text-violet-400 hover:bg-violet-950/20',
   }
   return (
-    // He añadido 'max-w-full' y 'break-words' para forzar que el contenido no se salga
     <button onClick={onClick} disabled={disabled}
       className={`w-full max-w-full flex items-center gap-3 px-4 py-3 rounded-xl border bg-stone-950/30
         transition-all text-left disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.99]
