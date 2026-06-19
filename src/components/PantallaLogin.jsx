@@ -69,17 +69,6 @@ export default function PantallaLogin({ onLogin, onAdminAccess }) {
 
       <div className="relative z-10 w-full max-w-5xl px-4 flex flex-col items-center animate-fade-in">
         
-        {/* ── LOGO PRINCIPAL (Siempre visible excepto en selección de avatar) ── */}
-        {fase !== 'avatar' && (
-          <div className="text-center mb-16 select-none">
-            <h1 className="font-serif text-5xl md:text-7xl text-white font-bold tracking-wider drop-shadow-[0_5px_5px_rgba(0,0,0,1)]">
-              Higurashi <span className="text-red-600">N</span>o <span className="text-red-600">N</span>aku Koro Ni
-            </h1>
-            <p className="text-white mt-2 font-serif text-xl drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
-              Watanagashi Festival
-            </p>
-          </div>
-        )}
 
         {/* ── FASE 1: MENÚ PRINCIPAL TIPO VISUAL NOVEL ── */}
         {fase === 'inicio' && (
