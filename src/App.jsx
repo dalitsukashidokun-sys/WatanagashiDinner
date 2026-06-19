@@ -71,6 +71,12 @@ export default function App() {
   const esVistaMenu = vista === VISTAS.MENU && !esAdmin
   const fondoPc = esVistaMenu ? '/fondos/Fondomenu_pc.png' : '/fondos/fondo.png'
   const fondoMovil = esVistaMenu ? '/fondos/Fondomenu_movil.png' : '/fondos/fondo2.png'
+  const fondoPcComanda = esVistaComanda ? '/fondos/Fondomenu_pc.png' : '/fondos/fondo.png'
+  const fondoMovilComanda = esVistaComanda ? '/fondos/Fondomenu_movil.png' : '/fondos/fondo2.png'
+  const fondoPcAdmin = esVistaAdmin ? '/fondos/Fondomenu_pc.png' : '/fondos/fondo.png'
+  const fondoMovilAdmin = esVistaAdmin ? '/fondos/Fondomenu_movil.png' : '/fondos/fondo2.png'
+  const fondoPcJuego = esVistaJuego ? '/fondos/Fondomenu_pc.png' : '/fondos/fondo.png'
+  const fondoMovilJuego = esVistaJuego ? '/fondos/Fondomenu_movil.png' : '/fondos/fondo2.png'
 
   // ── Platos del menú ───────────────────────────────────────────────────────
   const { platos, cargando: cargandoPlatos } = usePlatos()
