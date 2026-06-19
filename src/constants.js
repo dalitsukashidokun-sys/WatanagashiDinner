@@ -2,7 +2,7 @@
 // ─── Constantes y Datos Estáticos ─────────────────────────────────────────────
 
 // Contraseña del panel de administrador
-export const ADMIN_PASSWORD = 'admin123'
+export const ADMIN_PASSWORD = 'Naku'
 
 // ─── Personajes jugables ─────────────────────────────────────────────────────
 // Los avatares se sirven desde /public/avatares/<id>.png

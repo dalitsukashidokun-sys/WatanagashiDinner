@@ -62,7 +62,7 @@ export default function PantallaLogin({ onLogin, onAdminAccess }) {
   return (
     <div
       className="min-h-screen bg-cover bg-center bg-fixed flex flex-col items-center justify-center relative transition-all duration-700"
-      style={{ backgroundImage: "url('/fondos/fondo.jpg')" }}
+      style={{ backgroundImage: "url('/fondos/fondo.png')" }}
     >
       {/* Capa de oscurecimiento dinámica */}
       <div className={`absolute inset-0 pointer-events-none transition-colors duration-1000 ${fase === 'avatar' ? 'bg-black/85' : 'bg-black/30'}`} />
