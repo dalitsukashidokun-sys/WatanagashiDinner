@@ -9,12 +9,12 @@ import { PERSONAJES } from '../constants'
 
 export function useJuego() {
   const [estadoJuego, setEstadoJuego] = useState(null)
-  const [usuarios,    setUsuarios]    = useState([])
-  const [votos,       setVotos]       = useState([])
-  const [acciones,    setAcciones]    = useState([])
-  const [log,         setLog]         = useState([])
-  const [cargando,    setCargando]    = useState(true)
-  const [rtActivo,    setRtActivo]    = useState(false)
+  const [usuarios,     setUsuarios]    = useState([])
+  const [votos,        setVotos]       = useState([])
+  const [acciones,     setAcciones]    = useState([])
+  const [log,          setLog]         = useState([])
+  const [cargando,     setCargando]    = useState(true)
+  const [rtActivo,     setRtActivo]    = useState(false)
 
   // ── Carga completa ────────────────────────────────────────────────────────
   const cargar = useCallback(async () => {
@@ -22,7 +22,7 @@ export function useJuego() {
     try {
       const [resEstado, resUsuarios, resVotos, resAcciones, resLog] = await Promise.all([
         supabase.from('estado_juego').select('*').single(),
-        supabase.from('usuarios').select('id,nombre,avatar,bando,vivo,objeto_usado').order('nombre'),
+        supabase.from('usuarios').select('id,nombre,avatar,password,bando,vivo,objeto_usado').order('nombre'),
         supabase.from('votos').select('*').order('created_at'),
         supabase.from('acciones_noche').select('*').order('created_at'),
         supabase.from('log_juego').select('*').order('created_at', { ascending: false }).limit(50),
@@ -97,8 +97,10 @@ export function useJuego() {
 
     // Elegir asesino aleatorio
     const idxAsesino = Math.floor(Math.random() * vivos.length)
+    
+    // CORRECCIÓN TÁCTICA: Incluir ...u para satisfacer restricciones NOT NULL en el upsert
     const updates = vivos.map((u, i) => ({
-      id: u.id,
+      ...u, 
       bando: i === idxAsesino ? 'asesino' : 'aldeano',
       vivo: true,
       objeto_usado: false,
@@ -108,7 +110,6 @@ export function useJuego() {
     if (error) return { error: error.message }
 
     // Limpiar votos y acciones previas
-    const ronda = estadoJuego?.ronda_actual ?? 0
     await supabase.from('votos').delete().gte('ronda', 0)
     await supabase.from('acciones_noche').delete().gte('ronda', 0)
     await supabase.from('log_juego').delete().gte('ronda', 0)
@@ -120,7 +121,7 @@ export function useJuego() {
     }).eq('id', 1)
 
     return { error: null }
-  }, [usuarios, estadoJuego])
+  }, [usuarios])
 
   // ── Restablecer contraseña de usuario ─────────────────────────────────────
   const resetearPassword = useCallback(async (usuarioId, nuevaPassword) => {
@@ -138,7 +139,6 @@ export function useJuego() {
     const ronda = estadoJuego?.ronda_actual ?? 0
     const votosRonda = votos.filter(v => v.ronda === ronda)
 
-    // Contar votos con pesos
     const conteo = {}
     votosRonda.forEach(v => {
       if (v.nominado_id === 'nadie') return
@@ -148,14 +148,12 @@ export function useJuego() {
     const entries = Object.entries(conteo).sort((a, b) => b[1] - a[1])
 
     if (entries.length === 0) {
-      // Nadie fue votado
       await _logEvento(ronda, 'sin_victima_dia', 'El pueblo no llegó a un acuerdo. Nadie fue ejecutado.', true)
       await cambiarFase('noche')
       return { resultado: 'nadie', error: null }
     }
 
     const [masVotadoId, maxVotos] = entries[0]
-    // Empate entre los primeros → nadie ejecutado
     const empate = entries.filter(([, v]) => v === maxVotos).length > 1
 
     if (empate) {
@@ -169,12 +167,9 @@ export function useJuego() {
 
     const esAsesino = victima.bando === 'asesino'
 
-    // Efecto Machete de Rena: si Rena es la víctima inocente, ejecuta al mayor votante suyo
-    let victoriaAsesino = false
     if (!esAsesino && victima.avatar === 'rena') {
       const renaObj = usuarios.find(u => u.avatar === 'rena' && !u.objeto_usado)
       if (renaObj) {
-        // Buscar quién la votó más (o simplemente el primer votante)
         const votanteRena = votosRonda
           .filter(v => v.nominado_id === 'rena')
           .sort((a, b) => (b.peso || 1) - (a.peso || 1))[0]
@@ -191,7 +186,6 @@ export function useJuego() {
       }
     }
 
-    // Marcar víctima como muerta
     await supabase.from('usuarios').update({ vivo: false }).eq('id', victima.id)
 
     if (esAsesino) {
@@ -204,11 +198,8 @@ export function useJuego() {
         `${victima.nombre} fue ejecutado/a por el pueblo. Era un Aldeano inocente.`, true)
     }
 
-    // Comprobar condición de victoria del asesino tras la muerte
     const vivosDespues = usuarios.filter(u => u.vivo && u.id !== victima.id)
-    victoriaAsesino = _comprobarVictoriaAsesino(vivosDespues)
-
-    if (victoriaAsesino) {
+    if (_comprobarVictoriaAsesino(vivosDespues)) {
       const asesino = usuarios.find(u => u.bando === 'asesino' && u.id !== victima.id)
       await _logEvento(ronda, 'victoria_asesino',
         `Solo quedan 2 supervivientes. ${asesino?.nombre || 'El Asesino'} ha ganado.`, true)
@@ -222,19 +213,17 @@ export function useJuego() {
 
   // ══════════════════════════════════════════════════════════════════════════
   // PROCESAMIENTO DE NOCHE
-  // Cola: Táser Shion → Protección Keiichi → Asesinato → Pasiva Rika
   // ══════════════════════════════════════════════════════════════════════════
   const procesarNoche = useCallback(async () => {
     const ronda = estadoJuego?.ronda_actual ?? 0
     const accionesRonda = acciones.filter(a => a.ronda === ronda && !a.procesada)
 
-    // Estado de jugadores en copia local mutable
     const estadoLocal = usuarios.reduce((acc, u) => {
       acc[u.avatar] = { ...u, paralizadoEstaNoche: false }
       return acc
     }, {})
 
-    // ── 1. TÁSER DE SHION (paralizar) ─────────────────────────────────────
+    // ── 1. TÁSER DE SHION ─────────────────────────────────────────────────
     const accionShion = accionesRonda.find(a => a.actor_id === 'shion' && a.tipo_accion === 'paralizar')
     if (accionShion?.objetivo_id && estadoLocal['shion'] && !estadoLocal['shion'].paralizadoEstaNoche) {
       const objetivo = accionShion.objetivo_id
@@ -264,9 +253,7 @@ export function useJuego() {
       if (obj) {
         await supabase.from('usuarios').update({ objeto_usado: true }).eq('avatar', 'satoko')
         await _logEvento(ronda, 'revelacion',
-          `Satoko reveló que ${obj.nombre} es ${obj.bando === 'asesino' ? 'EL ASESINO' : 'un Aldeano'}.`,
-          false // Solo el admin lo ve; en la UI del jugador se le puede notificar aparte
-        )
+          `Satoko reveló que ${obj.nombre} es ${obj.bando === 'asesino' ? 'EL ASESINO' : 'un Aldeano'}.`, false)
       }
     }
 
@@ -281,14 +268,12 @@ export function useJuego() {
       if (objetivo && objetivo.vivo) {
         let asesinado = true
 
-        // ¿Está protegido?
         if (protegidoId === objetivoId) {
           asesinado = false
           await _logEvento(ronda, 'proteccion_exitosa',
             `El asesino intentó matar a ${objetivo.nombre}, pero Keiichi lo protegió.`, true)
         }
 
-        // ¿Pasiva de Rika (primer intento)?
         if (asesinado && objetivoId === 'rika') {
           const rika = usuarios.find(u => u.avatar === 'rika')
           if (rika && !rika.objeto_usado) {
@@ -304,18 +289,12 @@ export function useJuego() {
           await _logEvento(ronda, 'muerte_noche',
             `${objetivo.nombre} fue asesinado/a durante la noche.`, true)
 
-          // Comprobar victoria del asesino
-          const vivosDespues = Object.values(estadoLocal)
-            .filter(u => u.vivo && u.avatar !== objetivoId)
+          const vivosDespues = Object.values(estadoLocal).filter(u => u.vivo && u.avatar !== objetivoId)
           if (_comprobarVictoriaAsesino(vivosDespues)) {
             const asesino = vivosDespues.find(u => u.bando === 'asesino')
             await _logEvento(ronda, 'victoria_asesino',
               `Solo quedan 2 supervivientes. ${asesino?.nombre || 'El Asesino'} ha ganado.`, true)
-            await supabase.from('estado_juego').update({
-              fase_actual: 'finalizado',
-              ganador: 'asesino',
-            }).eq('id', 1)
-            // Marcar acciones como procesadas
+            await supabase.from('estado_juego').update({ fase_actual: 'finalizado', ganador: 'asesino' }).eq('id', 1)
             await _marcarAccionesProcesadas(accionesRonda)
             return { resultado: 'victoria_asesino', error: null }
           }
@@ -323,13 +302,10 @@ export function useJuego() {
       }
     } else if (accionAsesino && actorAsesino?.paralizadoEstaNoche) {
       await _logEvento(ronda, 'asesino_paralizado',
-        'El asesino fue paralizado por Shion. No pudo actuar esta noche.', true)
+        'El asesino fue paralizado por Shion. No pudo actor esta noche.', true)
     }
 
-    // ── Marcar todas las acciones de esta ronda como procesadas ──────────
     await _marcarAccionesProcesadas(accionesRonda)
-
-    // Avanzar a fase de votación / nuevo día
     await cambiarFase('votacion', 1)
     return { resultado: 'noche_procesada', error: null }
   }, [acciones, usuarios, estadoJuego, cambiarFase])
@@ -339,7 +315,6 @@ export function useJuego() {
     const ronda = estadoJuego?.ronda_actual ?? 0
     const votante = usuarios.find(u => u.avatar === votanteId)
 
-    // Mion vota con peso 2
     const peso = votanteId === 'mion' && !votante?.objeto_usado ? 2 : 1
     if (votanteId === 'mion' && !votante?.objeto_usado) {
       await supabase.from('usuarios').update({ objeto_usado: true }).eq('avatar', 'mion')
@@ -380,7 +355,6 @@ export function useJuego() {
     return asesinoVivo && totalVivos <= 2
   }
 
-  // ── Utilidad: obtener info de personaje por id de avatar ─────────────────
   const getPersonaje = (avatarId) => PERSONAJES.find(p => p.id === avatarId)
 
   return {
@@ -392,14 +366,12 @@ export function useJuego() {
     cargando,
     rtActivo,
     recargar: cargar,
-    // Admin
     cambiarFase,
     toggleJuegoHabilitado,
     asignarRoles,
     resetearPassword,
     procesarVotacion,
     procesarNoche,
-    // Jugador
     registrarVoto,
     registrarAccion,
     getPersonaje,
