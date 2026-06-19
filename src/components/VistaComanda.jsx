@@ -124,9 +124,7 @@ export default function VistaComanda({
               </div>
             </div>
             <div className="h-px bg-stone-100" />
-            <p className="text-[11px] text-stone-400 text-center font-medium">
-              Cada interacción altera la persistencia de datos en el servidor de forma inmediata.
-            </p>
+            
           </div>
         )}
         
