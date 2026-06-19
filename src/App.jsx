@@ -1,6 +1,5 @@
 // src/App.jsx
-// ─── Componente Raíz v2: Comanda + Motor de Juego ────────────────────────────
-// Integra el nuevo módulo de juego oculto manteniendo toda la lógica de comanda.
+// ─── Componente Raíz v3: Sincronización de Fondos y Navbar Discreta ──────────
 
 import { useState, useEffect } from 'react'
 import { VISTAS } from './constants'
@@ -48,12 +47,10 @@ export default function App() {
   useEffect(() => {
     if (!usuario) return
 
-    // Carga inicial
     supabase.from('estado_juego').select('juego_habilitado').single().then(({ data }) => {
       if (data) setJuegoHabilitado(data.juego_habilitado)
     })
 
-    // Suscripción Realtime
     const canal = supabase
       .channel('app-estado-juego')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'estado_juego' }, (payload) => {
@@ -66,13 +63,10 @@ export default function App() {
     return () => { supabase.removeChannel(canal) }
   }, [usuario])
 
-
-// ── Fondos responsivos por vista ──────────────────────────────────────────
-// menu_usuario o comanda_usuario → Fondomenu, resto → fondo base
-const requiereFondoMenu = (vista === VISTAS.MENU || vista === VISTAS.COMANDA) && !esAdmin
-
-const fondoPc = requiereFondoMenu ? '/fondos/Fondomenu_pc.png' : '/fondos/fondo.png'
-const fondoMovil = requiereFondoMenu ? '/fondos/Fondomenu_movil.png' : '/fondos/fondo2.png'
+  // ── FONDOS UNIFICADOS (Idénticos a la Vista de Detalle) ───────────────────
+  // Se fuerza a que todas las pantallas utilicen el fondo base original
+  const fondoPc = '/fondos/fondo.png'
+  const fondoMovil = '/fondos/fondo2.png'
 
   // ── Platos del menú ───────────────────────────────────────────────────────
   const { platos, cargando: cargandoPlatos } = usePlatos()
@@ -133,7 +127,6 @@ const fondoMovil = requiereFondoMenu ? '/fondos/Fondomenu_movil.png' : '/fondos/
     return await upsertItem(platoId, cantidad, nota)
   }
 
-  // Sin sesión → pantalla de login
   if (!usuario) {
     return (
       <PantallaLogin
@@ -143,10 +136,9 @@ const fondoMovil = requiereFondoMenu ? '/fondos/Fondomenu_movil.png' : '/fondos/
     )
   }
 
-  // ── App principal ─────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen flex flex-col relative">
-      {/* ── Fondos responsivos ── */}
+      {/* ── Fondos responsivos unificados ── */}
       <div
         className="fixed inset-0 bg-cover bg-center transition-all duration-700 block md:hidden"
         style={{ backgroundImage: `url('${fondoMovil}')` }}
@@ -165,7 +157,7 @@ const fondoMovil = requiereFondoMenu ? '/fondos/Fondomenu_movil.png' : '/fondos/
           usuario={usuario}
           esAdmin={esAdmin}
           vistaActual={vista}
-          totalItems={misComandas.length}
+          totalItems={0} // SOLUCIÓN: Forzado a 0 para eliminar permanentemente las notificaciones del icono
           rtActivo={esAdmin ? rtAdmin : rtUser}
           juegoHabilitado={!esAdmin && juegoHabilitado}
           onNavegar={v => { setPlatoDetalle(null); setVista(v) }}

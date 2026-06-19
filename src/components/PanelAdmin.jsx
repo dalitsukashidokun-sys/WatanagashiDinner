@@ -226,9 +226,9 @@ function SeccionJuego({ juego }) {
     procesarVotacion, procesarNoche,
   } = juego
 
-  const [mensaje, setMensaje]           = useState('')
+  const [mensaje, setMensaje] = useState('')
   const [cargandoAccion, setCargandoAccion] = useState(false)
-  const [resetTarget, setResetTarget]   = useState(null)
+  const [resetTarget, setResetTarget] = useState(null)
   const [nuevaPassInput, setNuevaPassInput] = useState('')
   const [mostrarBandos, setMostrarBandos] = useState(false)
 
@@ -244,9 +244,12 @@ function SeccionJuego({ juego }) {
     setTimeout(() => setMensaje(''), 4000)
   }
 
-  const vivosCount  = usuarios.filter(u => u.vivo).length
-  const muertosCount = usuarios.filter(u => !u.vivo).length
-  const votosRonda  = votos.filter(v => v.ronda === ronda)
+  // CORRECCIÓN ATÓMICA DE CONTEO: Excluye el registro del Admin del cálculo visual
+  const usuariosJugadores = usuarios.filter(u => u.id !== 'admin')
+  const vivosCount = usuariosJugadores.filter(u => u.vivo).length
+  const muertosCount = usuariosJugadores.filter(u => !u.vivo).length
+  
+  const votosRonda = votos.filter(v => v.ronda === ronda)
   const accionesRonda = acciones.filter(a => a.ronda === ronda && !a.procesada)
 
   const ETIQUETA_FASE = {
@@ -260,19 +263,14 @@ function SeccionJuego({ juego }) {
 
   return (
     <div className="space-y-5">
-
-      {/* ── Mensaje de estado ── */}
       {mensaje && (
         <div className={`p-3 rounded-lg text-sm border ${
-          mensaje.startsWith('Error')
-            ? 'bg-red-950/40 border-red-800/50 text-red-300'
-            : 'bg-emerald-950/40 border-emerald-800/50 text-emerald-300'
+          mensaje.startsWith('Error') ? 'bg-red-950/40 border-red-800/50 text-red-300' : 'bg-emerald-950/40 border-emerald-800/50 text-emerald-300'
         }`}>
           {mensaje}
         </div>
       )}
 
-      {/* ── Estado actual del juego ── */}
       <div className={`card-dark p-4 ${etiqueta.bg} border-stone-800/60`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -284,138 +282,66 @@ function SeccionJuego({ juego }) {
           </div>
           {estadoJuego?.ganador && (
             <span className={`text-xs font-bold px-2 py-1 rounded-full ${
-              estadoJuego.ganador === 'aldeanos'
-                ? 'bg-emerald-900/50 text-emerald-400 border border-emerald-700/40'
-                : 'bg-red-900/50 text-red-400 border border-red-700/40'
+              estadoJuego.ganador === 'aldeanos' ? 'bg-emerald-900/50 text-emerald-400 border border-emerald-700/40' : 'bg-red-900/50 text-red-400 border border-red-700/40'
             }`}>
               {estadoJuego.ganador === 'aldeanos' ? '🕊️ Victoria Aldeanos' : '🗡️ Victoria Asesino'}
             </span>
           )}
         </div>
         <div className="flex gap-4 mt-3 text-xs text-stone-500">
-          <span className="flex items-center gap-1">
-            <Shield size={11} className="text-emerald-500" /> {vivosCount} vivos
-          </span>
-          <span className="flex items-center gap-1">
-            <Skull size={11} className="text-red-500" /> {muertosCount} muertos
-          </span>
-          <span className="flex items-center gap-1">
-            <Vote size={11} className="text-amber-500" /> {votosRonda.length} votos esta ronda
-          </span>
-          <span className="flex items-center gap-1">
-            <Moon size={11} className="text-indigo-400" /> {accionesRonda.length} acciones nocturnas
-          </span>
+          <span className="flex items-center gap-1"><Shield size={11} className="text-emerald-500" /> {vivosCount} vivos</span>
+          <span className="flex items-center gap-1"><Skull size={11} className="text-red-500" /> {muertosCount} muertos</span>
+          <span className="flex items-center gap-1"><Vote size={11} className="text-amber-500" /> {votosRonda.length} votos</span>
+          <span className="flex items-center gap-1"><Moon size={11} className="text-indigo-400" /> {accionesRonda.length} acciones</span>
         </div>
       </div>
 
-      {/* ── 1. INTERRUPTOR MAESTRO ── */}
       <div className="card-dark p-5">
-        <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-widest mb-4">
-          ⚡ Interruptor Maestro
-        </h3>
+        <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-widest mb-4">⚡ Interruptor Maestro</h3>
         <div className="flex items-center justify-between">
           <div>
             <p className="text-stone-200 text-sm font-medium">Pantalla del Juego para Usuarios</p>
             <p className="text-stone-500 text-xs mt-0.5">
-              {habilitado
-                ? 'Los usuarios ven el botón de juego (parpadea en rojo).'
-                : 'El botón de juego está oculto para los usuarios.'}
+              {habilitado ? 'Los usuarios ven el botón de juego (parpadea en rojo).' : 'El botón de juego está oculto para los usuarios.'}
             </p>
           </div>
           <button
-            onClick={() => ejecutar(toggleJuegoHabilitado,
-              habilitado ? 'Juego deshabilitado para usuarios.' : 'Juego habilitado — botón visible.'
-            )}
+            onClick={() => ejecutar(toggleJuegoHabilitado, habilitado ? 'Juego deshabilitado.' : 'Juego habilitado.')}
             disabled={cargandoAccion}
             className={`relative inline-flex items-center h-8 w-14 rounded-full transition-colors duration-300 border-2 ${
               habilitado ? 'bg-red-700 border-red-500' : 'bg-stone-800 border-stone-700'
             }`}
           >
-            <span className={`inline-block w-5 h-5 bg-white rounded-full shadow transition-transform duration-300 ${
-              habilitado ? 'translate-x-7' : 'translate-x-1'
-            }`} />
+            <span className={`inline-block w-5 h-5 bg-white rounded-full shadow transition-transform duration-300 ${habilitado ? 'translate-x-7' : 'translate-x-1'}`} />
           </button>
         </div>
       </div>
 
-      {/* ── 2. CONTROL DE FASES (CORREGIDO) ── */}
       <div className="card-dark p-5">
-        <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-widest mb-4">
-          🎮 Control de Fases
-        </h3>
+        <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-widest mb-4">🎮 Control de Fases</h3>
         <div className="grid grid-cols-1 gap-2">
-          {/* Preparar partida */}
+          {/* DETONADOR DE CONFIGURACIÓN REPARADO */}
           <BtnFase
             label="Asignar Roles (Reiniciar Partida)"
-            descripcion="Sortea 1 Asesino entre los 6 personajes. Borra rondas anteriores."
+            descripcion="Sortea quirúrgicamente 1 Asesino entre los personajes activos en la base de datos."
             icon={<RefreshCw size={15} />}
             color="amber"
             disabled={cargandoAccion}
-            onClick={() => ejecutar(asignarRoles, 'Roles asignados. El juego está listo.')}
+            onClick={() => ejecutar(asignarRoles, 'Roles asignados correctamente en la mesa de juego.')}
           />
 
-          {/* Iniciar Día → Habilitado en 'espera', 'noche' o 'votacion' como rescate manual */}
-          <BtnFase
-            label="Iniciar Día"
-            descripcion="Los jugadores pueden hablar libremente. Avanza a Votación cuando lo decidas."
-            icon={<Sun size={15} />}
-            color="amber"
-            disabled={cargandoAccion || (fase !== 'espera' && fase !== 'noche' && fase !== 'votacion')}
-            onClick={() => ejecutar(() => cambiarFase('dia'), 'Fase de día iniciada.')}
-          />
-
-          {/* Iniciar Votación → Habilitado únicamente durante el Día */}
-          <BtnFase
-            label="Iniciar Votación Diurna"
-            descripcion="Los usuarios vivos pueden votar. Aparece el botón de voto en su pantalla."
-            icon={<Vote size={15} />}
-            color="orange"
-            disabled={cargandoAccion || fase !== 'dia'}
-            onClick={() => ejecutar(() => cambiarFase('votacion'), 'Votación abierta.')}
-          />
-
-          {/* Procesar Votación → Habilitado únicamente durante la Votación */}
-          <BtnFase
-            label="Procesar Votos del Día"
-            descripcion={`${votosRonda.length} votos recibidos. Calcula el más votado y aplica consecuencias.`}
-            icon={<AlertTriangle size={15} />}
-            color="red"
-            disabled={cargandoAccion || fase !== 'votacion'}
-            onClick={() => ejecutar(procesarVotacion, 'Votación procesada.')}
-          />
-
-          {/* Iniciar Noche → Rescate manual si se desea saltar votaciones */}
-          <BtnFase
-            label="Iniciar Noche"
-            descripcion="Los jugadores eligen en secreto el objetivo de su objeto."
-            icon={<Moon size={15} />}
-            color="indigo"
-            disabled={cargandoAccion || (fase !== 'dia' && fase !== 'votacion')}
-            onClick={() => ejecutar(() => cambiarFase('noche'), 'Fase de noche iniciada.')}
-          />
-
-          {/* Procesar Noche → Habilitado únicamente durante la Noche */}
-          <BtnFase
-            label="Procesar Noche"
-            descripcion={`${accionesRonda.length} acciones recibidas. Ejecuta cola: Táser → Protección → Asesinato → Pasivas.`}
-            icon={<Skull size={15} />}
-            color="violet"
-            disabled={cargandoAccion || fase !== 'noche'}
-            onClick={() => ejecutar(procesarNoche, 'Noche procesada. Nueva ronda.')}
-          />
+          <BtnFase label="Iniciar Día" descripcion="Los jugadores pueden hablar libremente." icon={<Sun size={15} />} color="amber" disabled={cargandoAccion || (fase !== 'espera' && fase !== 'noche' && fase !== 'votacion')} onClick={() => ejecutar(() => cambiarFase('dia'), 'Fase de día iniciada.')} />
+          <BtnFase label="Iniciar Votación Diurna" descripcion="Los usuarios vivos pueden votar." icon={<Vote size={15} />} color="orange" disabled={cargandoAccion || fase !== 'dia'} onClick={() => ejecutar(() => cambiarFase('votacion'), 'Votación abierta.')} />
+          <BtnFase label="Procesar Votos del Día" descripcion={`${votosRonda.length} votos recibidos.`} icon={<AlertTriangle size={15} />} color="red" disabled={cargandoAccion || fase !== 'votacion'} onClick={() => ejecutar(procesarVotacion, 'Votación procesada.')} />
+          <BtnFase label="Iniciar Noche" descripcion="Los jugadores eligen en secreto el objetivo de su objeto." icon={<Moon size={15} />} color="indigo" disabled={cargandoAccion || (fase !== 'dia' && fase !== 'votacion')} onClick={() => ejecutar(() => cambiarFase('noche'), 'Fase de noche iniciada.')} />
+          <BtnFase label="Procesar Noche" descripcion={`${accionesRonda.length} acciones recibidas.`} icon={<Skull size={15} />} color="violet" disabled={cargandoAccion || fase !== 'noche'} onClick={() => ejecutar(procesarNoche, 'Noche procesada.')} />
         </div>
       </div>
 
-      {/* ── 3. TABLERO: JUGADORES ── */}
       <div className="card-dark p-5">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-widest">
-            👁️ Tablero de Jugadores
-          </h3>
-          <button
-            onClick={() => setMostrarBandos(!mostrarBandos)}
-            className="flex items-center gap-1.5 text-xs text-stone-400 hover:text-amber-400 transition-colors"
-          >
+          <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-widest">👁️ Tablero de Jugadores</h3>
+          <button onClick={() => setMostrarBandos(!mostrarBandos)} className="flex items-center gap-1.5 text-xs text-stone-400 hover:text-amber-400 transition-colors">
             {mostrarBandos ? <EyeOff size={13} /> : <Eye size={13} />}
             {mostrarBandos ? 'Ocultar bandos' : 'Revelar bandos'}
           </button>
@@ -425,7 +351,7 @@ function SeccionJuego({ juego }) {
           <div className="space-y-2">{[...Array(6)].map((_, i) => <div key={i} className="h-12 bg-stone-800/50 rounded-lg animate-pulse" />)}</div>
         ) : (
           <div className="space-y-2">
-            {usuarios.map(u => {
+            {usuariosJugadores.map(u => {
               const p = PERSONAJES.find(x => x.id === u.avatar)
               const votosRecibidos = votosRonda.filter(v => v.nominado_id === u.avatar)
               const pesoRecibido = votosRecibidos.reduce((acc, v) => acc + (v.peso || 1), 0)
@@ -434,33 +360,24 @@ function SeccionJuego({ juego }) {
 
               return (
                 <div key={u.id} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all ${
-                  u.vivo
-                    ? `border-stone-800/60 ${p?.color ? `bg-gradient-to-r ${p.color} bg-opacity-30` : 'bg-stone-900/40'}`
-                    : 'border-stone-900/40 bg-stone-950/50 opacity-50'
+                  u.vivo ? `border-stone-800/60 ${p?.color ? `bg-gradient-to-r ${p.color} bg-opacity-30` : 'bg-stone-900/40'}` : 'border-stone-900/40 bg-stone-950/50 opacity-50'
                 }`}>
                   <div className={`w-8 h-8 rounded-lg overflow-hidden shrink-0 border ${u.vivo ? 'border-stone-700/50' : 'border-stone-800/30'}`}>
-                    <img src={p?.avatar} alt={u.nombre} className="w-full h-full object-cover"
-                      onError={e => { e.target.style.display = 'none' }} />
+                    <img src={p?.avatar} alt={u.nombre} className="w-full h-full object-cover" onError={e => { e.target.style.display = 'none' }} />
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className={`text-sm font-medium ${u.vivo ? (p?.textColor || 'text-stone-300') : 'text-stone-600 line-through'}`}>
-                        {u.nombre}
-                      </span>
+                      <span className={`text-sm font-medium ${u.vivo ? (p?.textColor || 'text-stone-300') : 'text-stone-600 line-through'}`}>{u.nombre}</span>
                       {!u.vivo && <span className="text-xs text-red-800">☠</span>}
                     </div>
                     <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                       {mostrarBandos && (
                         <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${
-                          u.bando === 'asesino'
-                            ? 'bg-red-950/60 text-red-400 border border-red-800/40'
-                            : 'bg-emerald-950/40 text-emerald-500 border border-emerald-800/30'
-                        }`}>
-                          {u.bando === 'asesino' ? '🗡 Asesino' : '🕊 Aldeano'}
-                        </span>
+                          u.bando === 'asesino' ? 'bg-red-950/60 text-red-400 border border-red-800/40' : 'bg-emerald-950/40 text-emerald-500 border border-emerald-800/30'
+                        }`}>{u.bando === 'asesino' ? '🗡 Asesino' : '🕊 Aldeano'}</span>
                       )}
-                      {u.objeto_usado && <span className="text-xs text-stone-600">objeto usado</span>}
+                      {u.objeto_usado ? <span className="text-xs text-stone-600">objeto usado</span> : null}
                       {haVotado && <span className="text-xs text-amber-600">✓ votó</span>}
                       {haActuado && <span className="text-xs text-indigo-500">✓ actuó</span>}
                     </div>
@@ -479,29 +396,19 @@ function SeccionJuego({ juego }) {
         )}
       </div>
 
-      {/* ── 4. GESTIÓN DE CREDENCIALES ── */}
       <div className="card-dark p-5">
-        <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-widest mb-4">
-          🔐 Gestión de Credenciales
-        </h3>
-        <p className="text-stone-500 text-xs mb-4">
-          Restablece la contraseña de cualquier personaje si la olvidaron.
-        </p>
-
+        <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-widest mb-4">🔐 Gestión de Credenciales</h3>
         <div className="space-y-2">
           {PERSONAJES.map(p => {
             const usuarioDB = usuarios.find(u => u.avatar === p.id)
             const estaExpandido = resetTarget?.usuario?.id === usuarioDB?.id
 
             return (
-              <div key={p.id} className={`rounded-xl border overflow-hidden transition-all ${
-                estaExpandido ? 'border-amber-800/50' : 'border-stone-800/60'
-              }`}>
+              <div key={p.id} className={`rounded-xl border overflow-hidden transition-all ${estaExpandido ? 'border-amber-800/50' : 'border-stone-800/60'}`}>
                 <div className="flex items-center justify-between px-3 py-2.5 bg-stone-900/40">
                   <div className="flex items-center gap-3">
                     <div className="w-7 h-7 rounded-md overflow-hidden bg-stone-800 shrink-0">
-                      <img src={p.avatar} alt={p.nombre} className="w-full h-full object-cover"
-                        onError={e => { e.target.style.display = 'none' }} />
+                      <img src={p.avatar} alt={p.nombre} className="w-full h-full object-cover" onError={e => { e.target.style.display = 'none' }} />
                     </div>
                     <div>
                       <span className={`text-sm font-medium ${p.textColor}`}>{p.nombre}</span>
@@ -511,13 +418,7 @@ function SeccionJuego({ juego }) {
                     </div>
                   </div>
                   {usuarioDB && (
-                    <button
-                      onClick={() => {
-                        setResetTarget(estaExpandido ? null : { usuario: usuarioDB })
-                        setNuevaPassInput('')
-                      }}
-                      className="flex items-center gap-1.5 text-xs text-stone-400 hover:text-amber-400 transition-colors px-2 py-1"
-                    >
+                    <button onClick={() => { setResetTarget(estaExpandido ? null : { usuario: usuarioDB }); setNuevaPassInput('') }} className="flex items-center gap-1.5 text-xs text-stone-400 hover:text-amber-400 transition-colors px-2 py-1">
                       {estaExpandido ? <Lock size={13} /> : <Unlock size={13} />}
                       {estaExpandido ? 'Cancelar' : 'Restablecer'}
                     </button>
@@ -527,32 +428,8 @@ function SeccionJuego({ juego }) {
                 {estaExpandido && (
                   <div className="px-3 pb-3 pt-2 bg-stone-950/50 animate-slide-up">
                     <div className="flex gap-2">
-                      <input
-                        type="text"
-                        className="flex-1 bg-stone-900 border border-stone-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-600 placeholder-stone-600 transition-colors"
-                        placeholder="Nueva contraseña..."
-                        value={nuevaPassInput}
-                        onChange={e => setNuevaPassInput(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && nuevaPassInput.length >= 3 && ejecutar(
-                          () => resetearPassword(resetTarget.usuario.id, nuevaPassInput),
-                          `Contraseña de ${resetTarget.usuario.nombre} actualizada.`
-                        ) && setResetTarget(null)}
-                        autoFocus
-                      />
-                      <button
-                        disabled={nuevaPassInput.length < 3 || cargandoAccion}
-                        onClick={async () => {
-                          await ejecutar(
-                            () => resetearPassword(resetTarget.usuario.id, nuevaPassInput),
-                            `Contraseña actualizada.`
-                          )
-                          setResetTarget(null)
-                          setNuevaPassInput('')
-                        }}
-                        className="px-3 py-2 bg-amber-800 hover:bg-amber-700 text-stone-100 text-sm font-medium rounded-lg disabled:opacity-40 transition-colors"
-                      >
-                        Guardar
-                      </button>
+                      <input type="text" className="flex-1 bg-stone-900 border border-stone-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-600" placeholder="Nueva contraseña..." value={nuevaPassInput} onChange={e => setNuevaPassInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && nuevaPassInput.length >= 3 && ejecutar(() => resetearPassword(resetTarget.usuario.id, nuevaPassInput), 'Contraseña actualizada.') && setResetTarget(null)} autoFocus />
+                      <button disabled={nuevaPassInput.length < 3 || cargandoAccion} onClick={async () => { await ejecutar(() => resetearPassword(resetTarget.usuario.id, nuevaPassInput), 'Contraseña actualizada.'); setResetTarget(null); setNuevaPassInput('') }} className="px-3 py-2 bg-amber-800 hover:bg-amber-700 text-stone-100 text-sm font-medium rounded-lg transition-colors">Guardar</button>
                     </div>
                   </div>
                 )}
@@ -562,19 +439,12 @@ function SeccionJuego({ juego }) {
         </div>
       </div>
 
-      {/* ── Log de eventos ── */}
       {juego.log.length > 0 && (
         <div className="card-dark p-5">
-          <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-widest mb-4">
-            📜 Log de Eventos
-          </h3>
+          <h3 className="text-xs font-semibold text-stone-500 uppercase tracking-widest mb-4">📜 Log de Eventos</h3>
           <div className="space-y-2 max-h-60 overflow-y-auto no-scrollbar">
             {juego.log.map(evento => (
-              <div key={evento.id} className={`text-xs px-3 py-2 rounded-lg border ${
-                evento.publica
-                  ? 'bg-stone-900/60 border-stone-800/50 text-stone-300'
-                  : 'bg-indigo-950/30 border-indigo-900/30 text-indigo-300'
-              }`}>
+              <div key={evento.id} className={`text-xs px-3 py-2 rounded-lg border ${evento.publica ? 'bg-stone-900/60 border-stone-800/50 text-stone-300' : 'bg-indigo-950/30 border-indigo-900/30 text-indigo-300'}`}>
                 <span className="text-stone-600 mr-2">R{evento.ronda}</span>
                 {evento.descripcion}
                 {!evento.publica && <span className="text-indigo-600 ml-2">[secreto]</span>}

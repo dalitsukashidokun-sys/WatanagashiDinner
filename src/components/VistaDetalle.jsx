@@ -1,6 +1,6 @@
 // src/components/VistaDetalle.jsx
-// ─── Vista de Detalle: Plato completo + Upsert inmediato a Supabase ───────────
-// No hay carrito temporal. Al pulsar "Añadir", la cantidad se persiste al instante.
+// ─── Vista de Detalle: Módulos Crema y Bloques Blancos (v2) ──────────────────
+// Totalmente sincronizado con la paleta #fdfbf7 y persistencia en Supabase.
 
 import { useState } from 'react'
 import { ArrowLeft, Plus, Minus, ShoppingBag, AlertCircle, CheckCircle2 } from 'lucide-react'
@@ -9,7 +9,6 @@ import { ArrowLeft, Plus, Minus, ShoppingBag, AlertCircle, CheckCircle2 } from '
  * @param {Object}   plato     - Objeto plato completo (sin campo precio)
  * @param {Function} onVolver  - Callback para regresar al menú
  * @param {Function} onAnyadir - async(platoId, cantidad, nota) → { error }
- *                               Llama directamente a upsertItem del hook
  */
 export default function VistaDetalle({ plato, onVolver, onAnyadir }) {
   const [cantidad, setCantidad] = useState(1)
@@ -31,9 +30,10 @@ export default function VistaDetalle({ plato, onVolver, onAnyadir }) {
   }
 
   return (
-    <div className="animate-fade-in">
-      {/* ── Imagen principal ── */}
-      <div className="relative h-56 sm:h-72 -mx-4 sm:mx-0 sm:rounded-xl overflow-hidden mb-6">
+    <div className="bg-[#fdfbf7] p-4 sm:p-6 rounded-2xl border border-[#decfa8]/60 shadow-xl max-w-3xl mx-auto animate-fade-in my-2">
+      
+      {/* ── Sección de cabecera con imagen integrada ── */}
+      <div className="relative h-56 sm:h-72 rounded-xl overflow-hidden mb-6 border border-stone-200 shadow-sm bg-white">
         {plato.imagen_url ? (
           <img
             src={plato.imagen_url}
@@ -41,122 +41,124 @@ export default function VistaDetalle({ plato, onVolver, onAnyadir }) {
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full bg-slate-800 flex items-center justify-center text-6xl">🍱</div>
+          <div className="w-full h-full bg-stone-100 flex items-center justify-center text-6xl opacity-40">🍱</div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-transparent" />
+        
+        {/* Capa de degradado sutil */}
+        <div className="absolute inset-0 bg-gradient-to-t from-stone-900/60 via-transparent to-transparent" />
 
         <button
           onClick={onVolver}
-          className="absolute top-4 left-4 sm:left-0 flex items-center gap-1.5
-            bg-slate-950/80 hover:bg-slate-900 text-slate-300 hover:text-white
-            text-sm px-3 py-1.5 rounded-lg border border-slate-700/50 transition-all"
+          className="absolute top-4 left-4 flex items-center gap-1.5
+            bg-white/90 hover:bg-white text-stone-800 font-bold
+            text-xs px-3 py-1.5 rounded-lg border border-stone-200 transition-all shadow-sm active:scale-95"
         >
           <ArrowLeft size={14} />
-          Volver
+          Volver al menú
         </button>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
-          <h1 className="font-serif text-2xl sm:text-3xl font-bold text-white leading-tight">
+        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
+          <h1 className="font-serif text-xl sm:text-2xl font-bold text-white drop-shadow-md">
             {plato.nombre}
           </h1>
         </div>
       </div>
 
-      <div className="space-y-6 max-w-2xl">
-        {/* Etiquetas */}
+      <div className="space-y-5 max-w-2xl mx-auto">
+        {/* Etiquetas de Categoria */}
         {plato.etiquetas?.length > 0 && (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5">
             {plato.etiquetas.map(tag => (
-              <span key={tag} className="tag tag-red">{tag}</span>
+              <span key={tag} className="px-2 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-900 text-[10px] font-bold uppercase tracking-wider">
+                {tag}
+              </span>
             ))}
           </div>
         )}
 
-        {/* Descripción */}
-        <div className="card-dark p-5">
-          <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">
-            Descripción
+        {/* Descripción (Bloque Blanco Puro) */}
+        <div className="bg-white border border-stone-200 rounded-xl p-4 shadow-sm">
+          <h2 className="text-[10px] font-bold text-[#5c4033] uppercase tracking-widest mb-2">
+            Detalles de la preparación
           </h2>
-          <p className="text-slate-300 leading-relaxed text-sm sm:text-base">
+          <p className="text-stone-700 leading-relaxed text-xs sm:text-sm font-medium">
             {plato.descripcion_larga || plato.descripcion_corta}
           </p>
         </div>
 
-        {/* ── Panel de pedido: sin precio ── */}
-        <div className="card-dark p-5 space-y-4">
+        {/* Panel de pedido (Bloque Blanco Puro) */}
+        <div className="bg-white border border-stone-200 rounded-xl p-4 shadow-sm space-y-4">
+          
           {/* Selector de cantidad */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">
-              Cantidad
-            </label>
-            <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-stone-50 pb-3">
+            <div>
+              <label className="block text-[10px] font-bold text-stone-500 uppercase tracking-widest">
+                Seleccionar raciones
+              </label>
+              <span className="text-[11px] text-stone-400 font-medium">Define cuántas unidades deseas añadir</span>
+            </div>
+            
+            <div className="flex items-center gap-3">
               <button
                 onClick={() => setCantidad(q => Math.max(1, q - 1))}
                 disabled={cantidad <= 1}
-                className="w-10 h-10 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700
-                  flex items-center justify-center text-slate-300 transition-all active:scale-90
-                  disabled:opacity-40 disabled:cursor-not-allowed"
+                className="w-8 h-8 rounded-lg bg-stone-50 hover:bg-stone-100 border border-stone-200
+                  flex items-center justify-center text-stone-700 transition-all active:scale-90
+                  disabled:opacity-30 disabled:cursor-not-allowed shadow-sm"
               >
-                <Minus size={16} />
+                <Minus size={14} />
               </button>
-              <span className="text-2xl font-bold text-white min-w-[2rem] text-center tabular-nums">
+              <span className="text-md font-bold text-stone-900 min-w-[2rem] text-center font-mono tabular-nums">
                 {cantidad}
               </span>
               <button
                 onClick={() => setCantidad(q => Math.min(20, q + 1))}
-                className="w-10 h-10 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700
-                  flex items-center justify-center text-slate-300 transition-all active:scale-90"
+                className="w-8 h-8 rounded-lg bg-stone-50 hover:bg-stone-100 border border-stone-200
+                  flex items-center justify-center text-stone-700 transition-all active:scale-90 shadow-sm"
               >
-                <Plus size={16} />
+                <Plus size={14} />
               </button>
-              {/* Sin precio — solo unidades */}
-              <span className="ml-auto text-slate-500 text-sm">
-                {cantidad === 1 ? '1 unidad' : `${cantidad} unidades`}
-              </span>
             </div>
           </div>
 
-          {/* Nota */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-widest mb-1.5">
-              Nota o alergia
-              <span className="text-slate-600 font-normal ml-1">(opcional)</span>
+          {/* Caja de Texto para Notas de Cocina */}
+          <div className="space-y-1.5">
+            <label className="block text-[10px] font-bold text-stone-500 uppercase tracking-widest">
+              Notas o especificaciones <span className="text-stone-400 font-normal lowercase">(opcional)</span>
             </label>
             <textarea
-              className="input-dark resize-none h-20 text-sm"
-              placeholder="Sin cebolla, alergia a... cambiar por..."
+              className="w-full bg-stone-50 border border-stone-200 rounded-xl px-3 py-2 text-xs text-stone-800 focus:outline-none focus:border-amber-700 placeholder-stone-400 resize-none h-20 leading-normal"
+              placeholder="Especifica modificaciones para el chef (ej: sin picante, cambiar acompañamiento...)"
               value={nota}
               onChange={e => setNota(e.target.value)}
               maxLength={200}
             />
           </div>
 
-          {/* Feedback */}
+          {/* Alertas de Estado */}
           {estado === 'ok' && (
-            <div className="flex items-center gap-2 text-emerald-400 text-sm
-              bg-emerald-950/40 border border-emerald-800/50 rounded-lg px-4 py-2.5">
-              <CheckCircle2 size={16} />
-              <span>Añadido a tu comanda · guardado en Supabase</span>
+            <div className="flex items-center gap-2 text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2 text-xs font-semibold animate-fade-in">
+              <CheckCircle2 size={14} className="shrink-0" />
+              <span>Plato agregado a tu orden. Registrado en cocina con éxito.</span>
             </div>
           )}
           {estado === 'error' && (
-            <div className="flex items-center gap-2 text-rose-400 text-sm
-              bg-rose-950/40 border border-rose-800/50 rounded-lg px-4 py-2.5">
-              <AlertCircle size={16} />
-              <span>Error al guardar. Inténtalo de nuevo.</span>
+            <div className="flex items-center gap-2 text-red-800 bg-red-50 border border-red-200 rounded-xl px-3 py-2 text-xs font-semibold animate-fade-in">
+              <AlertCircle size={14} className="shrink-0" />
+              <span>Ocurrió un error en la comunicación de red. Reintenta.</span>
             </div>
           )}
 
-          {/* Botón añadir — upsert inmediato */}
+          {/* Botón de acción atómica */}
           <button
-            className="btn-success w-full flex items-center justify-center gap-2 text-base"
+            className="w-full flex items-center justify-center gap-2 py-3 bg-amber-800 hover:bg-amber-700 text-white text-xs font-bold rounded-xl transition-colors shadow-sm disabled:opacity-50"
             onClick={handleAnyadir}
             disabled={estado === 'cargando' || estado === 'ok'}
           >
-            <ShoppingBag size={18} />
+            <ShoppingBag size={14} />
             {estado === 'cargando'
-              ? 'Guardando en Supabase...'
-              : `Añadir ×${cantidad} a mi comanda`
+              ? 'Sincronizando con Supabase...'
+              : `Confirmar ×${cantidad} Platillos`
             }
           </button>
         </div>
