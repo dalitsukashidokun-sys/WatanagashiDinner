@@ -16,7 +16,7 @@ export default function PanelAdmin({ comandas, cargando, totalPlatos, rtActivo }
   return (
     <div className={`min-h-screen w-full bg-cover bg-center bg-fixed animate-fade-in ${
       tab === 'juego'
-        ? 'bg-[url(/fondos/bgj_movil.jpg)] md:bg-[url(/fondos/bgj_pc.png)]'
+        ? 'bg-[url(/fondos/bgj_movil.png)] md:bg-[url(/fondos/bgj_pc.png)]'
         : ''
     }`}>
 
