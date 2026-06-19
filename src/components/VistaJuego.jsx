@@ -1,5 +1,5 @@
 // src/components/VistaJuego.jsx
-// ─── Vista del Jugador: Interfaz Calibrada Completa (v3.2) ───────────────────
+// ─── Vista del Jugador: Interfaz Calibrada Completa (v3.7 - Sincronizada) ─────
 // Paleta: Marrón Crema, Blanco y Textos de Alta Visibilidad.
 // Preserva la estructura modular de sub-componentes original.
 
@@ -12,13 +12,15 @@ import { useJuego } from '../hooks/useJuego'
  * @param {Object} usuario - El usuario en sesión (con avatar, id, nombre)
  */
 export default function VistaJuego({ usuario }) {
-  const juego = useJuego()
+  const miAvatar = usuario?.avatar
+  
+  // INYECCIÓN DE AISLAMIENTO: Pasamos el avatar al inicio para resolver el bando personal
+  const juego = useJuego(miAvatar)
   const { estadoJuego, usuarios, votos, acciones, log, registrarVoto, registrarAccion } = juego
 
   const [feedbackMsg, setFeedbackMsg] = useState('')
   const [cargandoAccion, setCargandoAccion] = useState(false)
 
-  const miAvatar = usuario.avatar
   const misDatos = usuarios.find(u => u.avatar === miAvatar)
   const estoyVivo = misDatos?.vivo ?? true
   const cargasUsadas = misDatos?.objeto_usado ?? 0
@@ -391,10 +393,7 @@ function PantallaVotacion({ miAvatar, vivosJugables, miVoto, cargandoAccion, onV
 }
 
 function PantallaNoche({ personaje, miAvatar, misDatos, vivosJugables, todosVivos, miAccion, cargasUsadas, cargandoAccion, onAccion }) {
-  const tipoAccion = personaje?.tipoAccion
   const esPasiva = miAvatar === 'rena'
-  
-  // Satoko dispone de 2 cargas máximas; el resto de aldeanos activos de 1 carga
   const tieneCargasDisponibles = miAvatar === 'satoko' ? cargasUsadas < 2 : cargasUsadas < 1
   const esAsesino = misDatos?.bando === 'asesino'
 
@@ -436,7 +435,7 @@ function PantallaNoche({ personaje, miAvatar, misDatos, vivosJugables, todosVivo
         </div>
       )}
 
-      {/* Control Aldeanos Activos con cargas (Rika = revelar, Satoko = paralizar estructural, Shion = paralizar, Keiichi = proteger) */}
+      {/* Control Aldeanos Activos con cargas */}
       {!esAsesino && !esPasiva && tieneCargasDisponibles && !miAccion && miAvatar !== 'mion' && (
         <div className="grid grid-cols-2 gap-2 pt-2">
           {todosVivos.filter(u => u.avatar !== miAvatar || miAvatar === 'keiichi').map(u => {
@@ -490,7 +489,6 @@ function PantallaNoche({ personaje, miAvatar, misDatos, vivosJugables, todosVivo
 }
 
 function PantallaFinalizado({ ganador, misDatos, usuarios }) {
-  // Búsqueda dinámica y local en el cliente para determinar la victoria de forma hermética
   const miUsuarioReal = usuarios.find(u => u.id === misDatos?.id)
   const esAsesino = miUsuarioReal?.bando === 'asesino'
   const esMiVictoria = (ganador === 'aldeanos' && !esAsesino) || (ganador === 'asesino' && esAsesino)
@@ -522,7 +520,6 @@ function PantallaFinalizado({ ganador, misDatos, usuarios }) {
         </>
       )}
 
-      {/* Revelación Maestra del Asesino al Final de la Partida */}
       {elAsesino && (
         <div className="flex flex-col items-center gap-3 pt-5 border-t border-stone-200 bg-white p-4 rounded-xl shadow-sm">
           <p className="text-stone-500 text-xs font-bold uppercase tracking-widest">Identidad del Asesino Oculto</p>
