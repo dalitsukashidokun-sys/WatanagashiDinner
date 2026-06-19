@@ -78,9 +78,9 @@ export default function PantallaLogin({ onLogin, onAdminAccess }) {
           </div>
         )}
 
-        {/* ── FASE 1: MENÚ PRINCIPAL ── */}
+        {/* ── FASE 1: MENÚ PRINCIPAL (Desplazado al extremo inferior en PC) ── */}
         {fase === 'inicio' && (
-          <div className="flex flex-col gap-4 items-center animate-slide-up mt-20 md:mt-0">
+          <div className="flex flex-col gap-4 items-center animate-slide-up mt-20 md:mt-96">
             <button className={btnVN} onClick={() => setFase('nombre')}>
               Iniciar Pedido
             </button>
@@ -93,7 +93,7 @@ export default function PantallaLogin({ onLogin, onAdminAccess }) {
           </div>
         )}
 
-        {/* ── Resto de fases (código, nombre, avatar) permanecen igual ── */}
+        {/* ── FASE 2: INTRODUCIR CÓDIGO ── */}
         {fase === 'codigo' && (
           <div className="flex flex-col items-center gap-4 animate-fade-in bg-black/60 p-8 rounded-xl border border-stone-700 backdrop-blur-sm">
             <h2 className="text-stone-200 font-serif text-xl">Acceso Restringido</h2>
@@ -114,6 +114,7 @@ export default function PantallaLogin({ onLogin, onAdminAccess }) {
           </div>
         )}
 
+        {/* ── FASE 3: INTRODUCIR NOMBRE ── */}
         {fase === 'nombre' && (
           <div className="flex flex-col items-center gap-6 animate-fade-in bg-black/70 p-10 rounded-2xl border border-stone-700/50 backdrop-blur-md shadow-2xl">
             <h2 className="text-stone-200 font-serif text-2xl tracking-wide">¿Cuál es tu nombre?</h2>
@@ -139,6 +140,7 @@ export default function PantallaLogin({ onLogin, onAdminAccess }) {
           </div>
         )}
 
+        {/* ── FASE 4: SELECCIÓN DE AVATAR (ENFOQUE TOTAL) ── */}
         {fase === 'avatar' && (
           <div className="w-full flex flex-col items-center animate-fade-in">
             <h2 className="text-4xl md:text-5xl font-serif text-stone-100 mb-12 drop-shadow-[0_2px_10px_rgba(255,0,0,0.5)]">
