@@ -14,34 +14,39 @@ export default function PanelAdmin({ comandas, cargando, totalPlatos, rtActivo }
   const [tab, setTab] = useState('comanda')
 
   return (
-    /* MODIFICADO: Se añaden fondos responsivos, bg-cover, bg-center y un padding/p-4 opcional para que respire el fondo */
-    <div className="bg-[url(/bgj_movil.jpg)] md:bg-[url(/fondos/bgj_pc.jpg)]">
+    /* CORREGIDO: Se mantiene tu ruta /fondos/bgj_pc.jpg, pero se inyectan las propiedades indispensables de escalado y dimensiones */
+    <div className="min-h-screen w-full bg-[url(/bgj_movil.png)] md:bg-[url(/fondos/bgj_pc.jpg)] bg-cover bg-center bg-fixed animate-fade-in">
+      
+      {/* Capa de contraste oscura (bg-black/55) para que las métricas y los textos de administración sigan siendo legibles */}
+      <div className="min-h-screen w-full bg-black/55 p-4 space-y-4">
 
-      {/* ── Cabecera ── */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <h2 className="font-serif text-xl text-white">Panel de Control</h2>
-          <p className="text-stone-500 text-sm mt-0.5">Organizador del Festival Watanagashi</p>
+        {/* ── Cabecera ── */}
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <h2 className="font-serif text-xl text-white">Panel de Control</h2>
+            <p className="text-stone-500 text-sm mt-0.5">Organizador del Festival Watanagashi</p>
+          </div>
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium
+            transition-all duration-300 ${rtActivo
+              ? 'bg-emerald-950/50 border-emerald-800/50 text-emerald-400'
+              : 'bg-stone-900 border-stone-800 text-stone-500'}`}>
+            <Radio size={12} className={rtActivo ? 'animate-pulse' : ''} />
+            {rtActivo ? 'Recibiendo cambios' : 'En directo'}
+          </div>
         </div>
-        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium
-          transition-all duration-300 ${rtActivo
-            ? 'bg-emerald-950/50 border-emerald-800/50 text-emerald-400'
-            : 'bg-stone-900 border-stone-800 text-stone-500'}`}>
-          <Radio size={12} className={rtActivo ? 'animate-pulse' : ''} />
-          {rtActivo ? 'Recibiendo cambios' : 'En directo'}
+
+        {/* ── Tabs ── */}
+        <div className="flex gap-1 border-b border-stone-800">
+          <TabBtn id="comanda" activo={tab} label="Comanda" icono={<Utensils size={14} />} onClick={setTab} />
+          <TabBtn id="juego"   activo={tab} label="Juego"   icono={<Swords size={14} />}  onClick={setTab} accentColor="red" />
         </div>
-      </div>
 
-      {/* ── Tabs ── */}
-      <div className="flex gap-1 border-b border-stone-800">
-        <TabBtn id="comanda" activo={tab} label="Comanda" icono={<Utensils size={14} />} onClick={setTab} />
-        <TabBtn id="juego"   activo={tab} label="Juego"   icono={<Swords size={14} />}  onClick={setTab} accentColor="red" />
+        {tab === 'comanda' && (
+          <SeccionComanda comandas={comandas} cargando={cargando} totalPlatos={totalPlatos} />
+        )}
+        {tab === 'juego' && <SeccionJuego />}
+        
       </div>
-
-      {tab === 'comanda' && (
-        <SeccionComanda comandas={comandas} cargando={cargando} totalPlatos={totalPlatos} />
-      )}
-      {tab === 'juego' && <SeccionJuego />}
     </div>
   )
 }
