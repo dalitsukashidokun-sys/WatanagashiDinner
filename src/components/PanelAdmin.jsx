@@ -297,11 +297,16 @@ function SeccionJuego() {
             color="amber" disabled={busy}
             onClick={() => exec(asignarRoles, 'Roles asignados. El juego está listo.')} />
 
-          <BtnAccion icon={<Sun size={14} />} label="Iniciar Día"
-            desc="Los jugadores pueden debatir libremente."
-            color="amber" disabled={busy || fase === 'espera'}
-            onClick={() => exec(() => cambiarFase('dia'), 'Fase de día iniciada.')} />
-
+        <BtnAccion 
+  icon={<Sun size={14} />} 
+  label="Iniciar Día"
+  desc="Inicia la fase activa del festival."
+  color="amber" 
+  // CORRECCIÓN: Permitimos pulsar si es fase 'espera', 'noche' o 'votacion'
+  // Solo bloqueamos si es 'dia' (porque ya lo es) o está ocupado (busy)
+  disabled={busy || fase === 'dia'} 
+  onClick={() => exec(() => cambiarFase('dia'), 'Fase de día iniciada.')} 
+/>
           <BtnAccion icon={<Vote size={14} />} label="Abrir Votación"
             desc="Aparece el panel de voto en las pantallas de los jugadores vivos."
             color="orange" disabled={busy || fase === 'espera'}
@@ -504,12 +509,13 @@ function BtnAccion({ icon, label, desc, color, disabled, onClick }) {
     violet: 'border-violet-900/40 hover:border-violet-700/50 text-violet-400 hover:bg-violet-950/20',
   }
   return (
+    // He añadido 'max-w-full' y 'break-words' para forzar que el contenido no se salga
     <button onClick={onClick} disabled={disabled}
-      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border bg-stone-950/30
+      className={`w-full max-w-full flex items-center gap-3 px-4 py-3 rounded-xl border bg-stone-950/30
         transition-all text-left disabled:opacity-30 disabled:cursor-not-allowed active:scale-[0.99]
         ${clr[color] || clr.amber}`}>
       <span className="shrink-0">{icon}</span>
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 break-words">
         <p className="text-sm font-medium">{label}</p>
         <p className="text-xs text-stone-500 mt-0.5 leading-snug">{desc}</p>
       </div>
