@@ -61,148 +61,154 @@ export default function VistaJuego({ usuario }) {
     fb('✓ Acción registrada. Espera a que el organizador procese la noche.')
   }
 
-  // ── Juego no habilitado ──────────────────────────────────────────────────
+  // ── Juego no habilitado (Con soporte de fondos duales y overlay) ─────────
   if (!estadoJuego?.juego_habilitado) {
     return (
-      <div className="flex flex-col items-center justify-center py-28 text-center animate-fade-in space-y-4">
-        <div className="text-7xl animate-pulse-slow">🦗</div>
-        <h2 className="font-serif text-2xl text-stone-300">Las cigarras guardan silencio</h2>
-        <p className="text-stone-500 text-sm max-w-xs">
-          El organizador aún no ha activado el juego. Espera pacientemente.
-        </p>
+      <div className="min-h-screen w-full bg-[url(/bgj_movil.jpg)] md:bg-[url(/bgj_pc.jpg)] bg-cover bg-center bg-fixed animate-fade-in">
+        <div className="min-h-screen bg-black/60 flex flex-col items-center justify-center p-4 text-center space-y-4">
+          <div className="text-7xl animate-pulse-slow">🦗</div>
+          <h2 className="font-serif text-2xl text-stone-300">Las cigarras guardan silencio</h2>
+          <p className="text-stone-500 text-sm max-w-xs">
+            El organizador aún no ha activado el juego. Espera pacientemente.
+          </p>
+        </div>
       </div>
     )
   }
 
-  // ── Muerto: pantalla de espectador ───────────────────────────────────────
+  // ── Muerto: pantalla de espectador (Con soporte de fondos duales y overlay) ──
   if (!estoyVivo) {
     return (
-      <div className="animate-fade-in space-y-5">
-        <div className="card-dark p-8 text-center space-y-4">
-          <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-red-900/40 mx-auto grayscale opacity-50">
-            <img src={personaje?.avatar} alt={usuario.nombre} className="w-full h-full object-cover" />
+      <div className="min-h-screen w-full bg-[url(/bgj_movil.jpg)] md:bg-[url(/bgj_pc.jpg)] bg-cover bg-center bg-fixed animate-fade-in">
+        <div className="min-h-screen bg-black/60 p-4 space-y-5">
+          <div className="card-dark p-8 text-center space-y-4">
+            <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-red-900/40 mx-auto grayscale opacity-50">
+              <img src={personaje?.avatar} alt={usuario.nombre} className="w-full h-full object-cover" />
+            </div>
+            <div>
+              <h2 className="font-serif text-3xl text-red-400 mb-1">☠ Has muerto</h2>
+              <p className="text-stone-500 text-sm">
+                Tu historia en Hinamizawa ha llegado a su fin. Observa en silencio.
+              </p>
+            </div>
           </div>
-          <div>
-            <h2 className="font-serif text-3xl text-red-400 mb-1">☠ Has muerto</h2>
-            <p className="text-stone-500 text-sm">
-              Tu historia en Hinamizawa ha llegado a su fin. Observa en silencio.
-            </p>
-          </div>
-        </div>
 
-        <TableroSupervivientes jugadores={todosLosJugadores} />
-        <LogEventos logPublico={logPublico} logSecreto={[]} logAbierto={logAbierto} setLogAbierto={setLogAbierto} />
+          <TableroSupervivientes jugadores={todosLosJugadores} />
+          <LogEventos logPublico={logPublico} logSecreto={[]} logAbierto={logAbierto} setLogAbierto={setLogAbierto} />
+        </div>
       </div>
     )
   }
 
+  // ── Pantalla de Jugador Activo (Con soporte de fondos duales y overlay) ──
   return (
-    //  CÓMO DEBE QUEDAR (Sin comillas internas y ambos en .jpg):
-<div className="min-h-screen bg-[url(/bgj_movil.jpg)] md:bg-[url(/bgj_pc.jpg)] bg-cover bg-center bg-fixed animate-fade-in space-y-4">
+    <div className="min-h-screen w-full bg-[url(/bgj_movil.jpg)] md:bg-[url(/bgj_pc.jpg)] bg-cover bg-center bg-fixed animate-fade-in">
+      <div className="min-h-screen bg-black/60 p-4 space-y-4">
 
-      {/* ── Mi identidad ── */}
-      <div className={`card-dark p-5 bg-gradient-to-r ${personaje?.color || ''}`}>
-        <div className="flex items-center gap-4">
-          <div className={`w-16 h-16 rounded-full overflow-hidden border-2 ${personaje?.borderColor || 'border-stone-600'} shrink-0`}>
-            <img src={personaje?.avatar} alt={usuario.nombre} className="w-full h-full object-cover" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h2 className={`font-serif text-xl font-bold ${personaje?.textColor || 'text-stone-200'}`}>
-              {usuario.nombre}
-            </h2>
-            <p className="text-stone-400 text-sm mt-0.5 truncate">{personaje?.descripcion}</p>
-            <div className="flex items-center flex-wrap gap-2 mt-2">
-              <span className="text-xs bg-stone-800/80 text-stone-300 px-2 py-0.5 rounded-full border border-stone-700/50">
-                {personaje?.emoji} {personaje?.objeto}
-              </span>
-              {heUsado && (
-                <span className="text-xs text-stone-600 px-2 py-0.5 rounded-full bg-stone-900/60 border border-stone-800/50">
-                  objeto agotado
+        {/* ── Mi identidad ── */}
+        <div className={`card-dark p-5 bg-gradient-to-r ${personaje?.color || ''}`}>
+          <div className="flex items-center gap-4">
+            <div className={`w-16 h-16 rounded-full overflow-hidden border-2 ${personaje?.borderColor || 'border-stone-600'} shrink-0`}>
+              <img src={personaje?.avatar} alt={usuario.nombre} className="w-full h-full object-cover" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className={`font-serif text-xl font-bold ${personaje?.textColor || 'text-stone-200'}`}>
+                {usuario.nombre}
+              </h2>
+              <p className="text-stone-400 text-sm mt-0.5 truncate">{personaje?.descripcion}</p>
+              <div className="flex items-center flex-wrap gap-2 mt-2">
+                <span className="text-xs bg-stone-800/80 text-stone-300 px-2 py-0.5 rounded-full border border-stone-700/50">
+                  {personaje?.emoji} {personaje?.objeto}
                 </span>
-              )}
-              {soyAsesino && (
-                <span className="text-xs bg-red-950/60 text-red-400 px-2 py-0.5 rounded-full border border-red-800/40 font-bold">
-                  🗡 Asesino
-                </span>
-              )}
+                {heUsado && (
+                  <span className="text-xs text-stone-600 px-2 py-0.5 rounded-full bg-stone-900/60 border border-stone-800/50">
+                    objeto agotado
+                  </span>
+                )}
+                {soyAsesino && (
+                  <span className="text-xs bg-red-950/60 text-red-400 px-2 py-0.5 rounded-full border border-red-800/40 font-bold">
+                    🗡 Asesino
+                  </span>
+                )}
+              </div>
             </div>
           </div>
+          {/* Descripción del objeto */}
+          <p className="text-stone-500 text-xs mt-3 leading-relaxed border-t border-stone-800/50 pt-3">
+            {personaje?.descripcionObjeto}
+          </p>
         </div>
-        {/* Descripción del objeto */}
-        <p className="text-stone-500 text-xs mt-3 leading-relaxed border-t border-stone-800/50 pt-3">
-          {personaje?.descripcionObjeto}
-        </p>
+
+        {/* ── Feedback ── */}
+        {feedback.msg && (
+          <div className={`px-4 py-3 rounded-xl text-sm border text-center transition-all animate-fade-in ${
+            feedback.tipo === 'error'
+              ? 'bg-red-950/50 border-red-800/50 text-red-300'
+              : 'bg-emerald-950/50 border-emerald-800/50 text-emerald-300'
+          }`}>
+            {feedback.msg}
+          </div>
+        )}
+
+        {/* ── Mensajes secretos ── */}
+        {logSecreto.length > 0 && (
+          <div className="card-dark p-4 border-indigo-900/40 bg-indigo-950/20 space-y-2">
+            <p className="text-xs text-indigo-400 uppercase tracking-widest font-semibold">📨 Informes secretos</p>
+            {logSecreto.map(e => (
+              <p key={e.id} className="text-indigo-200 text-sm leading-relaxed">{e.descripcion.replace(/^\[SECRETO[^\]]*\] /, '')}</p>
+            ))}
+          </div>
+        )}
+
+        {/* ── CONTENIDO POR FASE ── */}
+        <FaseIndicador fase={fase} ronda={ronda} />
+
+        {fase === FASES.ESPERA     && <PantallaEspera />}
+        {fase === FASES.DIA        && <PantallaDia jugadores={jugadores} />}
+        {fase === FASES.VOTACION   && (
+          <PantallaVotacion
+            miAvatar={miAvatar}
+            miVoto={miVoto}
+            vivosJugables={vivosJugables}
+            esMion={miAvatar === 'mion'}
+            heUsadoObjeto={heUsado}
+            busy={busy}
+            onVotar={hacerVoto}
+          />
+        )}
+        {fase === FASES.NOCHE && (
+          <PantallaNoche
+            personaje={personaje}
+            miAvatar={miAvatar}
+            misDatos={misDatos}
+            soyAsesino={soyAsesino}
+            vivosJugables={vivosJugables}
+            todosVivos={jugadores.filter(u => u.vivo)}
+            miAccion={miAccion}
+            heUsado={heUsado}
+            busy={busy}
+            onAccion={hacerAccion}
+          />
+        )}
+        {fase === FASES.FINALIZADO && (
+          <PantallaFinalizado
+            ganador={estadoJuego?.ganador}
+            misDatos={misDatos}
+            jugadores={jugadores}
+          />
+        )}
+
+        {/* ── Tablero de supervivientes ── */}
+        <TableroSupervivientes jugadores={todosLosJugadores} miAvatar={miAvatar} />
+
+        {/* ── Log público ── */}
+        <LogEventos
+          logPublico={logPublico}
+          logSecreto={[]}
+          logAbierto={logAbierto}
+          setLogAbierto={setLogAbierto}
+        />
       </div>
-
-      {/* ── Feedback ── */}
-      {feedback.msg && (
-        <div className={`px-4 py-3 rounded-xl text-sm border text-center transition-all animate-fade-in ${
-          feedback.tipo === 'error'
-            ? 'bg-red-950/50 border-red-800/50 text-red-300'
-            : 'bg-emerald-950/50 border-emerald-800/50 text-emerald-300'
-        }`}>
-          {feedback.msg}
-        </div>
-      )}
-
-      {/* ── Mensajes secretos (revelaciones, rastreos) ── */}
-      {logSecreto.length > 0 && (
-        <div className="card-dark p-4 border-indigo-900/40 bg-indigo-950/20 space-y-2">
-          <p className="text-xs text-indigo-400 uppercase tracking-widest font-semibold">📨 Informes secretos</p>
-          {logSecreto.map(e => (
-            <p key={e.id} className="text-indigo-200 text-sm leading-relaxed">{e.descripcion.replace(/^\[SECRETO[^\]]*\] /, '')}</p>
-          ))}
-        </div>
-      )}
-
-      {/* ── CONTENIDO POR FASE ── */}
-      <FaseIndicador fase={fase} ronda={ronda} />
-
-      {fase === FASES.ESPERA     && <PantallaEspera />}
-      {fase === FASES.DIA        && <PantallaDia jugadores={jugadores} />}
-      {fase === FASES.VOTACION   && (
-        <PantallaVotacion
-          miAvatar={miAvatar}
-          miVoto={miVoto}
-          vivosJugables={vivosJugables}
-          esMion={miAvatar === 'mion'}
-          heUsadoObjeto={heUsado}
-          busy={busy}
-          onVotar={hacerVoto}
-        />
-      )}
-      {fase === FASES.NOCHE && (
-        <PantallaNoche
-          personaje={personaje}
-          miAvatar={miAvatar}
-          misDatos={misDatos}
-          soyAsesino={soyAsesino}
-          vivosJugables={vivosJugables}
-          todosVivos={jugadores.filter(u => u.vivo)}
-          miAccion={miAccion}
-          heUsado={heUsado}
-          busy={busy}
-          onAccion={hacerAccion}
-        />
-      )}
-      {fase === FASES.FINALIZADO && (
-        <PantallaFinalizado
-          ganador={estadoJuego?.ganador}
-          misDatos={misDatos}
-          jugadores={jugadores}
-        />
-      )}
-
-      {/* ── Tablero de supervivientes ── */}
-      <TableroSupervivientes jugadores={todosLosJugadores} miAvatar={miAvatar} />
-
-      {/* ── Log público ── */}
-      <LogEventos
-        logPublico={logPublico}
-        logSecreto={[]}
-        logAbierto={logAbierto}
-        setLogAbierto={setLogAbierto}
-      />
     </div>
   )
 }
@@ -268,11 +274,30 @@ function PantallaDia({ jugadores }) {
 function PantallaVotacion({ miAvatar, miVoto, vivosJugables, esMion, heUsadoObjeto, busy, onVotar }) {
   return (
     <div className="card-dark p-5 space-y-4">
-      {/* ... (encabezado y estados se mantienen igual) ... */}
-      
+      <div className="flex items-center gap-2">
+        <Vote size={18} className="text-orange-400" />
+        <h3 className="font-serif text-lg text-orange-300">Urnas abiertas</h3>
+      </div>
+
+      {esMion && !heUsadoObjeto && (
+        <div className="text-xs text-emerald-300 bg-emerald-950/30 border border-emerald-800/40 rounded-lg px-3 py-2">
+          ✍️ Tu <strong>Rotulador</strong> está activo — tu voto contará por <strong>2</strong> esta ronda.
+        </div>
+      )}
+
+      {miVoto && (
+        <div className="text-xs text-amber-300 bg-amber-950/30 border border-amber-800/40 rounded-lg px-3 py-2">
+          ✓ Votaste contra{' '}
+          <strong>
+            {miVoto.nominado_id === 'nadie'
+              ? 'nadie (abstención)'
+              : PERSONAJES.find(p => p.id === miVoto.nominado_id)?.nombre ?? miVoto.nominado_id}
+          </strong>. Puedes cambiar tu voto.
+        </div>
+      )}
+
       <p className="text-stone-400 text-sm">¿A quién llevas al cadalso?</p>
 
-      {/* APLICAMOS EL CAMBIO AQUÍ: grid-cols-1 para móvil, sm:grid-cols-2 para escritorio */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {vivosJugables.map(u => {
           const p = PERSONAJES.find(x => x.id === u.avatar)
@@ -324,8 +349,8 @@ function PantallaNoche({ personaje, miAvatar, misDatos, soyAsesino, vivosJugable
   const esMion     = tipoAccion === 'votar_doble'
 
   const objetivos = tipoAccion === 'proteger'
-    ? todosVivos                          // Keiichi puede protegerse a sí mismo
-    : vivosJugables                       // Resto no
+    ? todosVivos                                          // Keiichi puede protegerse a sí mismo
+    : vivosJugables                                       // Resto no
 
   return (
     <div className="space-y-4">
@@ -350,17 +375,17 @@ function PantallaNoche({ personaje, miAvatar, misDatos, soyAsesino, vivosJugable
         </div>
       )}
 
-      {/* Asesino: elegir víctima */}
+      {/* Asesino: elegir víctima (CORREGIDO: Grid fluido 1 col en móvil, 2 en PC) */}
       {!miAccion && soyAsesino && (
         <div className="card-dark p-5">
           <p className="text-stone-400 text-sm mb-4">Elige tu objetivo:</p>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {vivosJugables.map(u => {
               const p = PERSONAJES.find(x => x.id === u.avatar)
               return (
                 <button key={u.id} disabled={busy}
                   onClick={() => onAccion(u.avatar, 'asesinar')}
-                  className="flex items-center gap-2.5 px-3 py-3 rounded-xl border border-red-900/40
+                  className="w-full flex items-center gap-2.5 px-3 py-3 rounded-xl border border-red-900/40
                     bg-red-950/20 hover:border-red-700 hover:bg-red-950/40 transition-all text-left
                     active:scale-95 disabled:opacity-50">
                   <div className="w-9 h-9 rounded-lg overflow-hidden shrink-0 bg-stone-800">
@@ -374,11 +399,11 @@ function PantallaNoche({ personaje, miAvatar, misDatos, soyAsesino, vivosJugable
         </div>
       )}
 
-      {/* Aldeanos con acción activa */}
+      {/* Aldeanos con acción activa (CORREGIDO: Grid fluido 1 col en móvil, 2 en PC) */}
       {!miAccion && !soyAsesino && !esPasiva && !esMion && !heUsado && (
         <div className="card-dark p-5">
           <p className="text-stone-400 text-sm mb-4">¿A quién diriges tu <strong>{personaje?.objeto}</strong>?</p>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {objetivos.map(u => {
               const p = PERSONAJES.find(x => x.id === u.avatar)
               const clrMap = {
@@ -390,7 +415,7 @@ function PantallaNoche({ personaje, miAvatar, misDatos, soyAsesino, vivosJugable
               return (
                 <button key={u.id} disabled={busy}
                   onClick={() => onAccion(u.avatar, tipoAccion)}
-                  className={`flex items-center gap-2.5 px-3 py-3 rounded-xl border transition-all
+                  className={`w-full flex items-center gap-2.5 px-3 py-3 rounded-xl border transition-all
                     text-left active:scale-95 disabled:opacity-50
                     ${clrMap[tipoAccion] || 'border-stone-700/50 bg-stone-900/40 hover:border-stone-500'}`}>
                   <div className="w-9 h-9 rounded-lg overflow-hidden shrink-0 bg-stone-800">
