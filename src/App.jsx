@@ -1,5 +1,5 @@
 // src/App.jsx
-// ─── Componente Raíz v3: Sincronización de Fondos y Navbar Discreta ──────────
+// ─── Raíz v2: Comanda + Motor de Juego ───────────────────────────────────────
 
 import { useState, useEffect } from 'react'
 import { VISTAS } from './constants'
@@ -16,196 +16,126 @@ import PanelAdmin    from './components/PanelAdmin'
 import VistaJuego    from './components/VistaJuego'
 
 export default function App() {
-  const [usuario,      setUsuario]      = useState(null)
-  const [esAdmin,      setEsAdmin]      = useState(false)
-  const [vista,        setVista]        = useState(VISTAS.MENU)
-  const [platoDetalle, setPlatoDetalle] = useState(null)
+  const [usuario,         setUsuario]         = useState(null)
+  const [esAdmin,         setEsAdmin]         = useState(false)
+  const [vista,           setVista]           = useState(VISTAS.MENU)
+  const [platoDetalle,    setPlatoDetalle]    = useState(null)
   const [juegoHabilitado, setJuegoHabilitado] = useState(false)
 
-  // ── Restaurar sesión desde localStorage ──────────────────────────────────
+  // ── Restaurar sesión ─────────────────────────────────────────────────────
   useEffect(() => {
     try {
       const admin  = localStorage.getItem('higurashi_admin')
       const sesion = localStorage.getItem('higurashi_sesion')
-
       if (admin === 'true') {
-        setEsAdmin(true)
-        setVista(VISTAS.ADMIN)
+        setEsAdmin(true); setVista(VISTAS.ADMIN)
         setUsuario({ id: 'admin', nombre: 'Admin', avatar: 'irie' })
         return
       }
-      if (sesion) {
-        setUsuario(JSON.parse(sesion))
-        setVista(VISTAS.MENU)
-      }
-    } catch {
-      localStorage.clear()
-    }
+      if (sesion) { setUsuario(JSON.parse(sesion)); setVista(VISTAS.MENU) }
+    } catch { localStorage.clear() }
   }, [])
 
-  // ── Escuchar cambios en juego_habilitado (Realtime) ───────────────────────
+  // ── Escuchar juego_habilitado en tiempo real ──────────────────────────────
   useEffect(() => {
     if (!usuario) return
 
-    supabase.from('estado_juego').select('juego_habilitado').single().then(({ data }) => {
-      if (data) setJuegoHabilitado(data.juego_habilitado)
-    })
+    // Carga inicial
+    supabase.from('estado_juego').select('juego_habilitado').eq('id', 1).single()
+      .then(({ data }) => { if (data) setJuegoHabilitado(data.juego_habilitado) })
 
     const canal = supabase
       .channel('app-estado-juego')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'estado_juego' }, (payload) => {
-        if (payload.new?.juego_habilitado !== undefined) {
-          setJuegoHabilitado(payload.new.juego_habilitado)
-        }
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'estado_juego' }, ({ new: row }) => {
+        if (row?.juego_habilitado !== undefined) setJuegoHabilitado(row.juego_habilitado)
       })
       .subscribe()
 
     return () => { supabase.removeChannel(canal) }
   }, [usuario])
 
-  // ── FONDOS UNIFICADOS (Idénticos a la Vista de Detalle) ───────────────────
-  // Se fuerza a que todas las pantallas utilicen el fondo base original
-// ── Fondos responsivos por vista ──────────────────────────────────────────
-  // Si está en Menú, Detalle o Comanda, se activa el set "Fondomenu"
-  const esSeccionGastronomica = 
-    (vista === VISTAS.MENU || vista === VISTAS.DETALLE || vista === VISTAS.COMANDA) && !esAdmin
+  // ── Fondos responsivos según vista ───────────────────────────────────────
+  // VistaMenu y VistaJuego usan el fondo de menú; login y juego activo su propio fondo.
+  const esVistaConFondoMenu = !esAdmin && (vista === VISTAS.MENU || vista === VISTAS.DETALLE || vista === VISTAS.COMANDA)
 
-  const fondoPc = esSeccionGastronomica ? '/fondos/Fondomenu_pc.png' : '/fondos/fondo.png'
-  const fondoMovil = esSeccionGastronomica ? '/fondos/Fondomenu_movil.png' : '/fondos/fondo2.png'
-  // ── Platos del menú ───────────────────────────────────────────────────────
+  // ── Hooks de datos ────────────────────────────────────────────────────────
   const { platos, cargando: cargandoPlatos } = usePlatos()
 
-  // ── Comandas del usuario ──────────────────────────────────────────────────
-  const {
-    comandas:      misComandas,
-    cargando:      cargandoMisComandas,
-    totalPlatos:   miTotalPlatos,
-    rtActivo:      rtUser,
-    upsertItem,
-    actualizarCantidad,
-    eliminarItem,
+  const { comandas: misComandas, cargando: cargandoMisComandas, totalPlatos: miTotal,
+    rtActivo: rtUser, upsertItem, actualizarCantidad, eliminarItem,
   } = useComandas(usuario?.id !== 'admin' ? usuario?.id : null, false)
 
-  // ── Todas las comandas (solo admin) ───────────────────────────────────────
-  const {
-    comandas:    todasComandas,
-    cargando:    cargandoAdmin,
-    totalPlatos: totalGlobalPlatos,
-    rtActivo:    rtAdmin,
+  const { comandas: todasComandas, cargando: cargandoAdmin, totalPlatos: totalGlobal,
+    rtActivo: rtAdmin,
   } = useComandas(null, esAdmin)
 
-  // ── Handlers de sesión ────────────────────────────────────────────────────
-  function handleLogin(usuarioData) {
-    setUsuario(usuarioData)
-    setVista(VISTAS.MENU)
-    setEsAdmin(false)
-  }
+  // ── Handlers ──────────────────────────────────────────────────────────────
+  const handleLogin        = (u)  => { setUsuario(u); setVista(VISTAS.MENU); setEsAdmin(false) }
+  const handleAdminAccess  = ()   => { setEsAdmin(true); setVista(VISTAS.ADMIN); setUsuario({ id: 'admin', nombre: 'Admin', avatar: 'irie' }) }
+  const handleLogout       = ()   => { localStorage.removeItem('higurashi_sesion'); localStorage.removeItem('higurashi_admin'); setUsuario(null); setEsAdmin(false); setVista(VISTAS.MENU); setPlatoDetalle(null) }
+  const handleVerDetalle   = (p)  => { setPlatoDetalle(p); setVista(VISTAS.DETALLE) }
+  const handleVolverAlMenu = ()   => { setPlatoDetalle(null); setVista(VISTAS.MENU) }
+  const handleAnyadir      = async (pid, qty, nota) => await upsertItem(pid, qty, nota)
+  const handleNavegar      = (v)  => { setPlatoDetalle(null); setVista(v) }
 
-  function handleAdminAccess() {
-    setEsAdmin(true)
-    setVista(VISTAS.ADMIN)
-    setUsuario({ id: 'admin', nombre: 'Admin', avatar: 'irie' })
-  }
-
-  function handleLogout() {
-    localStorage.removeItem('higurashi_sesion')
-    localStorage.removeItem('higurashi_admin')
-    setUsuario(null)
-    setEsAdmin(false)
-    setVista(VISTAS.MENU)
-    setPlatoDetalle(null)
-  }
-
-  // ── Handlers de navegación ────────────────────────────────────────────────
-  function handleVerDetalle(plato) {
-    setPlatoDetalle(plato)
-    setVista(VISTAS.DETALLE)
-  }
-
-  function handleVolverAlMenu() {
-    setPlatoDetalle(null)
-    setVista(VISTAS.MENU)
-  }
-
-  async function handleAnyadirAComanda(platoId, cantidad, nota) {
-    return await upsertItem(platoId, cantidad, nota)
-  }
-
+  // ── Sin sesión → login ────────────────────────────────────────────────────
   if (!usuario) {
-    return (
-      <PantallaLogin
-        onLogin={handleLogin}
-        onAdminAccess={handleAdminAccess}
-      />
-    )
+    return <PantallaLogin onLogin={handleLogin} onAdminAccess={handleAdminAccess} />
   }
 
   return (
     <div className="min-h-screen flex flex-col relative">
-      {/* ── Fondos responsivos unificados ── */}
-      <div
-        className="fixed inset-0 bg-cover bg-center transition-all duration-700 block md:hidden"
-        style={{ backgroundImage: `url('${fondoMovil}')` }}
-      />
-      <div
-        className="fixed inset-0 bg-cover bg-center transition-all duration-700 hidden md:block"
-        style={{ backgroundImage: `url('${fondoPc}')` }}
-      />
+      {/* ── Fondos ── */}
+      {/* Fondo de menú (móvil) */}
+      <div className={`fixed inset-0 bg-cover bg-center bg-fixed transition-opacity duration-700 block md:hidden
+        ${esVistaConFondoMenu ? 'opacity-100' : 'opacity-0'}`}
+        style={{ backgroundImage: "url('/fondos/Fondomenu_movil.png')" }} />
+      {/* Fondo de menú (PC) */}
+      <div className={`fixed inset-0 bg-cover bg-center bg-fixed transition-opacity duration-700 hidden md:block
+        ${esVistaConFondoMenu ? 'opacity-100' : 'opacity-0'}`}
+        style={{ backgroundImage: "url('/fondos/Fondomenu_pc.png')" }} />
+
+      {/* Fondo base para admin / juego (móvil) */}
+      <div className={`fixed inset-0 bg-cover bg-center bg-fixed transition-opacity duration-700 block md:hidden
+        ${!esVistaConFondoMenu ? 'opacity-100' : 'opacity-0'}`}
+        style={{ backgroundImage: "url('/fondos/fondo2.png')" }} />
+      {/* Fondo base para admin / juego (PC) */}
+      <div className={`fixed inset-0 bg-cover bg-center bg-fixed transition-opacity duration-700 hidden md:block
+        ${!esVistaConFondoMenu ? 'opacity-100' : 'opacity-0'}`}
+        style={{ backgroundImage: "url('/fondos/fondo.png')" }} />
 
       {/* Capa de oscurecimiento */}
       <div className="fixed inset-0 bg-black/72 pointer-events-none" />
 
       {/* Contenido */}
-      <div className="relative flex flex-col flex-1 z-10">
+      <div className="relative z-10 flex flex-col flex-1">
         <NavBar
           usuario={usuario}
           esAdmin={esAdmin}
           vistaActual={vista}
-          totalItems={0} // SOLUCIÓN: Forzado a 0 para eliminar permanentemente las notificaciones del icono
+          totalItems={misComandas.length}
           rtActivo={esAdmin ? rtAdmin : rtUser}
           juegoHabilitado={!esAdmin && juegoHabilitado}
-          onNavegar={v => { setPlatoDetalle(null); setVista(v) }}
+          onNavegar={handleNavegar}
           onLogout={handleLogout}
         />
 
         <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-6 sm:px-6 sm:py-8">
           {vista === VISTAS.MENU && (
-            <VistaMenu
-              platos={platos}
-              cargando={cargandoPlatos}
-              onVerDetalle={handleVerDetalle}
-            />
+            <VistaMenu platos={platos} cargando={cargandoPlatos} onVerDetalle={handleVerDetalle} />
           )}
-
           {vista === VISTAS.DETALLE && platoDetalle && (
-            <VistaDetalle
-              plato={platoDetalle}
-              onVolver={handleVolverAlMenu}
-              onAnyadir={handleAnyadirAComanda}
-            />
+            <VistaDetalle plato={platoDetalle} onVolver={handleVolverAlMenu} onAnyadir={handleAnyadir} />
           )}
-
           {vista === VISTAS.COMANDA && (
-            <VistaComanda
-              usuario={usuario}
-              comandas={misComandas}
-              cargando={cargandoMisComandas}
-              totalPlatos={miTotalPlatos}
-              rtActivo={rtUser}
-              onActualizarCantidad={actualizarCantidad}
-              onEliminar={eliminarItem}
-            />
+            <VistaComanda usuario={usuario} comandas={misComandas} cargando={cargandoMisComandas}
+              totalPlatos={miTotal} rtActivo={rtUser}
+              onActualizarCantidad={actualizarCantidad} onEliminar={eliminarItem} />
           )}
-
           {vista === VISTAS.ADMIN && esAdmin && (
-            <PanelAdmin
-              comandas={todasComandas}
-              cargando={cargandoAdmin}
-              totalPlatos={totalGlobalPlatos}
-              rtActivo={rtAdmin}
-            />
+            <PanelAdmin comandas={todasComandas} cargando={cargandoAdmin}
+              totalPlatos={totalGlobal} rtActivo={rtAdmin} />
           )}
-
           {vista === VISTAS.JUEGO && !esAdmin && (
             <VistaJuego usuario={usuario} />
           )}
