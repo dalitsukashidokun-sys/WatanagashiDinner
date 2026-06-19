@@ -1,6 +1,0 @@
-REEMPLAZAR ESTE ARCHIVO por la imagen de fondo:
-  public/fondos/fondo.jpg
-
-Formatos aceptados: .jpg, .png, .webp
-Tamaño recomendado: 1920×1080px o mayor.
-La app aplica automáticamente bg-cover bg-center bg-fixed + capa bg-black/70.
