@@ -1,7 +1,6 @@
 // src/hooks/useJuego.js
-// ─── Hook: Motor de Estado del Juego Oculto ──────────────────────────────────
-// Gestiona estado_juego, votos, acciones_noche con Realtime.
-// El procesamiento de noches y victorias ocurre aquí (llamado desde el admin).
+// ─── Hook: Motor de Estado del Juego Oculto (Definitivo) ──────────────────────
+// Gestiona estado_juego, votos, acciones_noche con Realtime y Blindaje Anti-Meta.
 
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../supabaseClient'
@@ -16,30 +15,36 @@ export function useJuego() {
   const [cargando,     setCargando]    = useState(true)
   const [rtActivo,     setRtActivo]    = useState(false)
 
-  // ── Carga completa ────────────────────────────────────────────────────────
+  // ── Carga Completa con Blindaje de Datos ──────────────────────────────────
   const cargar = useCallback(async () => {
     setCargando(true)
     try {
-      const [resEstado, resUsuarios, resVotos, resAcciones, resLog] = await Promise.all([
-        supabase.from('estado_juego').select('*').single(),
-        supabase.from('usuarios').select('id,nombre,avatar,password,bando,vivo,objeto_usado').order('nombre'),
+      // 1. Consultamos primero el estado del juego para verificar las fases
+      const { data: estado } = await supabase.from('estado_juego').select('*').single()
+      if (estado) setEstadoJuego(estado)
+
+      // 2. BLINDAJE TÁCTICO: La columna 'bando' jamás se envía al cliente si la partida está activa
+      const bandoQuery = estado?.fase_actual === 'finalizado' ? ',bando' : ''
+
+      const [resUsuarios, resVotos, resAcciones, resLog] = await Promise.all([
+        supabase.from('usuarios').select(`id,nombre,avatar,password,vivo,objeto_usado${bandoQuery}`).order('nombre'),
         supabase.from('votos').select('*').order('created_at'),
         supabase.from('acciones_noche').select('*').order('created_at'),
         supabase.from('log_juego').select('*').order('created_at', { ascending: false }).limit(50),
       ])
-      if (resEstado.data)  setEstadoJuego(resEstado.data)
+
       if (resUsuarios.data) setUsuarios(resUsuarios.data)
       if (resVotos.data)   setVotos(resVotos.data)
       if (resAcciones.data) setAcciones(resAcciones.data)
       if (resLog.data)     setLog(resLog.data)
     } catch (e) {
-      console.error('useJuego cargar:', e)
+      console.error('Error en carga useJuego:', e)
     } finally {
       setCargando(false)
     }
   }, [])
 
-  // ── Realtime ──────────────────────────────────────────────────────────────
+  // ── Suscripción Realtime ──────────────────────────────────────────────────
   useEffect(() => {
     cargar()
 
@@ -62,11 +67,7 @@ export function useJuego() {
     return () => { supabase.removeChannel(canal) }
   }, [cargar])
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // ACCIONES DEL ADMINISTRADOR
-  // ══════════════════════════════════════════════════════════════════════════
-
-  // ── Cambiar fase ─────────────────────────────────────────────────────────
+  // ── Cambiar Fase ─────────────────────────────────────────────────────────
   const cambiarFase = useCallback(async (nuevaFase, rondaDelta = 0) => {
     const rondaActual = estadoJuego?.ronda_actual ?? 0
     const { error } = await supabase
@@ -81,7 +82,7 @@ export function useJuego() {
     return { error }
   }, [estadoJuego])
 
-  // ── Habilitar / deshabilitar juego ────────────────────────────────────────
+  // ── Habilitar / Deshabilitar Juego ────────────────────────────────────────
   const toggleJuegoHabilitado = useCallback(async () => {
     const { error } = await supabase
       .from('estado_juego')
@@ -90,7 +91,7 @@ export function useJuego() {
     return { error }
   }, [estadoJuego])
 
-  // ── Asignar roles aleatoriamente (1 asesino, 5 aldeanos) ─────────────────
+  // ── Asignar Roles (Reinicio Absoluto) ─────────────────────────────────────
   const asignarRoles = useCallback(async () => {
     const vivos = usuarios.filter(u => u.avatar !== 'admin')
     if (vivos.length === 0) return { error: 'No hay usuarios registrados.' }
@@ -101,7 +102,7 @@ export function useJuego() {
       ...u, 
       bando: i === idxAsesino ? 'asesino' : 'aldeano',
       vivo: true,
-      objeto_usado: false,
+      objeto_usado: 0, // Reinicia el contador numérico de usos
     }))
 
     const { error } = await supabase.from('usuarios').upsert(updates)
@@ -120,7 +121,7 @@ export function useJuego() {
     return { error: null }
   }, [usuarios])
 
-  // ── Restablecer contraseña de usuario ─────────────────────────────────────
+  // ── Restablecer Contraseña ────────────────────────────────────────────────
   const resetearPassword = useCallback(async (usuarioId, nuevaPassword) => {
     const { error } = await supabase
       .from('usuarios')
@@ -129,9 +130,7 @@ export function useJuego() {
     return { error }
   }, [])
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // PROCESAMIENTO DE VOTACIÓN DIURNA
-  // ══════════════════════════════════════════════════════════════════════════
+  // ── Procesamiento de Votación Diurna ──────────────────────────────────────
   const procesarVotacion = useCallback(async () => {
     const ronda = estadoJuego?.ronda_actual ?? 0
     const votosRonda = votos.filter(v => v.ronda === ronda)
@@ -145,7 +144,7 @@ export function useJuego() {
     const entries = Object.entries(conteo).sort((a, b) => b[1] - a[1])
 
     if (entries.length === 0) {
-      await _logEvento(ronda, 'sin_victima_dia', 'El pueblo no llegó a un acuerdo. Nadie fue ejecutado.', true)
+      await _logEvento(ronda, 'sin_victima_dia', 'El pueblo debatió intensamente, pero decidió otorgar una tregua y no ejecutar a nadie hoy.', true)
       await cambiarFase('noche')
       return { resultado: 'nadie', error: null }
     }
@@ -154,225 +153,211 @@ export function useJuego() {
     const empate = entries.filter(([, v]) => v === maxVotos).length > 1
 
     if (empate) {
-      await _logEvento(ronda, 'empate_dia', 'Empate en la votación. Nadie fue ejecutado.', true)
+      await _logEvento(ronda, 'empate_dia', 'Las acusaciones están completamente divididas. Nadie fue llevado al cadalso.', true)
       await cambiarFase('noche')
       return { resultado: 'empate', error: null }
     }
 
-    const victima = usuarios.find(u => u.avatar === masVotadoId)
+    // Consulta aislada y segura del veredicto real en servidor
+    const { data: victima } = await supabase.from('usuarios').select('*').eq('avatar', masVotadoId).single()
     if (!victima) return { error: 'Víctima no encontrada' }
 
     const esAsesino = victima.bando === 'asesino'
 
-    if (!esAsesino && victima.avatar === 'rena') {
-      const renaObj = usuarios.find(u => u.avatar === 'rena' && !u.objeto_usado)
-      if (renaObj) {
-        const votanteRena = votosRonda
-          .filter(v => v.nominado_id === 'rena')
-          .sort((a, b) => (b.peso || 1) - (a.peso || 1))[0]
-
-        if (votanteRena) {
-          const acusador = usuarios.find(u => u.avatar === votanteRena.votante_id)
-          if (acusador) {
-            await supabase.from('usuarios').update({ vivo: false }).eq('id', acusador.id)
-            await supabase.from('usuarios').update({ objeto_usado: true }).eq('id', renaObj.id)
-            await _logEvento(ronda, 'machete_rena',
-              `Rena fue linchada inocentemente. Su Machete ejecutó a ${acusador.nombre}.`, true)
-          }
-        }
+    // Efecto de defensa de Rena
+    if (!esAsesino && victima.avatar === 'rena' && victima.objeto_usado === 0) {
+      const votanteRena = votosRonda.filter(v => v.nominado_id === 'rena').sort((a, b) => (b.peso || 1) - (a.peso || 1))[0]
+      if (votanteRena) {
+        await supabase.from('usuarios').update({ vivo: false }).eq('avatar', votanteRena.votante_id)
+        await supabase.from('usuarios').update({ objeto_usado: 1 }).eq('avatar', 'rena')
+        await _logEvento(ronda, 'machete_rena', `Rena fue linchada injustamente. En un estallido de locura antes de caer, su Machete arrebató la vida de su principal acusador.`, true)
       }
     }
 
     await supabase.from('usuarios').update({ vivo: false }).eq('id', victima.id)
 
     if (esAsesino) {
-      await _logEvento(ronda, 'victoria_aldeanos',
-        `¡${victima.nombre} era el Asesino! El pueblo de Hinamizawa está a salvo.`, true)
+      await _logEvento(ronda, 'victoria_aldeanos', `¡Las sospechas eran ciertas! El culpable ha sido descubierto y neutralizado. La paz vuelve a Hinamizawa.`, true)
       await supabase.from('estado_juego').update({ fase_actual: 'finalizado', ganador: 'aldeanos' }).eq('id', 1)
       return { resultado: 'victoria_aldeanos', error: null }
     } else {
-      await _logEvento(ronda, 'muerte_dia',
-        `${victima.nombre} fue ejecutado/a por el pueblo. Era un Aldeano inocente.`, true)
+      await _logEvento(ronda, 'muerte_dia', `${victima.nombre} fue ejecutado/a por el veredicto del pueblo. Era un habitante inocente.`, true)
     }
 
-    const vivosDespues = usuarios.filter(u => u.vivo && u.id !== victima.id)
-    if (_comprobarVictoriaAsesino(vivosDespues)) {
-      const asesino = usuarios.find(u => u.bando === 'asesino' && u.id !== victima.id)
-      await _logEvento(ronda, 'victoria_asesino',
-        `Solo quedan 2 supervivientes. ${asesino?.nombre || 'El Asesino'} ha ganado.`, true)
+    const { data: todos } = await supabase.from('usuarios').select('*')
+    const vivosDespues = todos.filter(u => u.vivo && u.avatar !== 'admin')
+    if (vivosDespues.length <= 2 && vivosDespues.some(u => u.bando === 'asesino')) {
+      await _logEvento(ronda, 'victoria_asesino', `La paranoia ha fragmentado la mesa. Ya no quedan suficientes votos para detener la tragedia.`, true)
       await supabase.from('estado_juego').update({ fase_actual: 'finalizado', ganador: 'asesino' }).eq('id', 1)
       return { resultado: 'victoria_asesino', error: null }
     }
 
     await cambiarFase('noche')
-    return { resultado: 'muerte_inocente', victima: victima.nombre, error: null }
-  }, [votos, usuarios, estadoJuego, cambiarFase])
+    return { resultado: 'muerte_inocente', error: null }
+  }, [votos, estadoJuego, cambiarFase])
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // PROCESAMIENTO DE NOCHE
-  // ══════════════════════════════════════════════════════════════════════════
+  // ── Procesamiento de Noche Hermético y Confidencial ────────────────────────
   const procesarNoche = useCallback(async () => {
     const ronda = estadoJuego?.ronda_actual ?? 0
     const accionesRonda = acciones.filter(a => a.ronda === ronda && !a.procesada)
 
-    const estadoLocal = usuarios.reduce((acc, u) => {
-      acc[u.avatar] = { ...u, paralizadoEstaNoche: false }
+    // Lectura completa del servidor para evaluar bandos y movimientos reales
+    const { data: listaUsuarios } = await supabase.from('usuarios').select('*')
+    const estadoLocal = listaUsuarios.reduce((acc, u) => {
+      acc[u.avatar] = { ...u, paralizadoEstaNoche: false, seMovioEstaNoche: false }
       return acc
     }, {})
 
+    // Registrar quiénes emitieron comandos (para el rastreador de Satoko)
+    accionesRonda.forEach(a => {
+      if (estadoLocal[a.actor_id]) estadoLocal[a.actor_id].seMovioEstaNoche = true
+    })
+
     // ── 1. TÁSER DE SHION ─────────────────────────────────────────────────
-    const accionShion = accionesRonda.find(a => a.actor_id === 'shion' && a.tipo_accion === 'paralizar')
-    if (accionShion?.objetivo_id && estadoLocal['shion'] && !estadoLocal['shion'].paralizadoEstaNoche) {
-      const objetivo = accionShion.objetivo_id
-      if (estadoLocal[objetivo]) {
-        estadoLocal[objetivo].paralizadoEstaNoche = true
-        await _logEvento(ronda, 'paralisis',
-          `Shion ha paralizado a ${estadoLocal[objetivo]?.nombre}. Su acción esta noche ha sido anulada.`, false)
+    const accShion = accionesRonda.find(a => a.actor_id === 'shion' && a.tipo_accion === 'paralizar')
+    if (accShion?.objetivo_id && estadoLocal['shion'] && !estadoLocal['shion'].paralizadoEstaNoche) {
+      const obj = accShion.objetivo_id
+      if (estadoLocal[obj]) {
+        estadoLocal[obj].paralizadoEstaNoche = true
+        await supabase.from('acciones_noche').update({ 
+          resultado_secreto: `Has inmovilizado con éxito a ${estadoLocal[obj].nombre} con tu Táser. Sus planes para esta noche se han desmoronado.` 
+        }).eq('id', accShion.id)
       }
     }
 
     // ── 2. PROTECCIÓN DE KEIICHI ──────────────────────────────────────────
     let protegidoId = null
-    const accionKeiichi = accionesRonda.find(a => a.actor_id === 'keiichi' && a.tipo_accion === 'proteger')
-    const keiichi = estadoLocal['keiichi']
-    if (accionKeiichi?.objetivo_id && keiichi && !keiichi.paralizadoEstaNoche && !keiichi.objeto_usado) {
-      protegidoId = accionKeiichi.objetivo_id
-      await supabase.from('usuarios').update({ objeto_usado: true }).eq('avatar', 'keiichi')
-      await _logEvento(ronda, 'proteccion',
-        `Keiichi protegió con su bate a ${estadoLocal[protegidoId]?.nombre}.`, false)
+    const accKeiichi = accionesRonda.find(a => a.actor_id === 'keiichi' && a.tipo_accion === 'proteger')
+    if (accKeiichi?.objetivo_id && estadoLocal['keiichi'] && !estadoLocal['keiichi'].paralizadoEstaNoche && estadoLocal['keiichi'].objeto_usado < 1) {
+      protegidoId = accKeiichi.objetivo_id
+      await supabase.from('usuarios').update({ objeto_usado: 1 }).eq('avatar', 'keiichi')
+      await supabase.from('acciones_noche').update({ 
+        resultado_secreto: `Te has apostado en los alrededores de la casa de ${estadoLocal[protegidoId].nombre} empuñando tu bate.` 
+      }).eq('id', accKeiichi.id)
     }
 
-    // ── 3. REVELACIÓN DE SATOKO ───────────────────────────────────────────
-    const accionSatoko = accionesRonda.find(a => a.actor_id === 'satoko' && a.tipo_accion === 'revelar')
-    const satoko = estadoLocal['satoko']
-    if (accionSatoko?.objetivo_id && satoko && !satoko.paralizadoEstaNoche && !satoko.objeto_usado) {
-      const obj = estadoLocal[accionSatoko.objetivo_id]
-      if (obj) {
-        await supabase.from('usuarios').update({ objeto_usado: true }).eq('avatar', 'satoko')
-        await _logEvento(ronda, 'revelacion',
-          `Satoko reveló que ${obj.nombre} es ${obj.bando === 'asesino' ? 'EL ASESINO' : 'un Aldeano'}.`, false)
-      }
+    // ── 3. INSPECCIÓN DE RIKA (Nueva Activa Centralizada) ───────────────────
+    const accRika = accionesRonda.find(a => a.actor_id === 'rika' && a.tipo_accion === 'revelar')
+    if (accRika?.objetivo_id && estadoLocal['rika'] && !estadoLocal['rika'].paralizadoEstaNoche && estadoLocal['rika'].objeto_usado < 1) {
+      const obj = estadoLocal[accRika.objetivo_id]
+      await supabase.from('usuarios').update({ objeto_usado: 1 }).eq('avatar', 'rika')
+      const veredicto = obj.bando === 'asesino' ? 'pertenece al bando del ASESINO' : 'es un Aldeano totalmente inocente'
+      await supabase.from('acciones_noche').update({ 
+        resultado_secreto: `Has observado los hilos del Fragmento. Confirmado: ${obj.nombre} ${veredicto}.` 
+      }).eq('id', accRika.id)
     }
 
-    // ── 4. ASESINATO DEL ASESINO ──────────────────────────────────────────
-    const accionAsesino = accionesRonda.find(a => a.tipo_accion === 'asesinar')
-    const actorAsesino = accionAsesino ? estadoLocal[accionAsesino.actor_id] : null
+    // ── 4. TRAMPA DE ALAMBRE DE SATOKO (Opción B - 2 Cargas Máximas) ─────────
+    const accSatoko = accionesRonda.find(a => a.actor_id === 'satoko' && a.tipo_accion === 'paralizar') // Reutiliza input estructural
+    if (accSatoko?.objetivo_id && estadoLocal['satoko'] && !estadoLocal['satoko'].paralizadoEstaNoche && estadoLocal['satoko'].objeto_usado < 2) {
+      const obj = estadoLocal[accSatoko.objetivo_id]
+      const nuevoContador = (estadoLocal['satoko'].objeto_usado || 0) + 1
+      await supabase.from('usuarios').update({ objeto_usado: nuevoContador }).eq('avatar', 'satoko')
+      
+      const seMovio = obj.seMovioEstaNoche && !obj.paralizadoEstaNoche
+      const reporteMovimiento = seMovio
+        ? `Tus hilos espía se tensaron bruscamente: ${obj.nombre} SALIÓ de su hogar en la oscuridad.`
+        : `Tus hilos permanecen intactos: No hubo ningún tipo de movimiento en la casa de ${obj.nombre}.`
 
-    if (accionAsesino?.objetivo_id && actorAsesino && !actorAsesino.paralizadoEstaNoche) {
-      const objetivoId = accionAsesino.objetivo_id
-      const objetivo = estadoLocal[objetivoId]
+      await supabase.from('acciones_noche').update({ 
+        resultado_secreto: `${reporteMovimiento} (Trampa ${nuevoContador}/2 desplegada con éxito).` 
+      }).eq('id', accSatoko.id)
+    }
 
-      if (objetivo && objetivo.vivo) {
-        let asesinado = true
+    // ── 5. EJECUCIÓN DEL ASESINATO ────────────────────────────────────────
+    const accAsesino = accionesRonda.find(a => a.tipo_accion === 'asesinar')
+    let alguienMurio = false
+    let nombreMuerto = ''
 
-        if (protegidoId === objetivoId) {
-          asesinado = false
-          await _logEvento(ronda, 'proteccion_exitosa',
-            `El asesino intentó matar a ${objetivo.nombre}, pero Keiichi lo protegió.`, true)
-        }
+    if (accAsesino?.objetivo_id && estadoLocal[accAsesino.actor_id] && !estadoLocal[accAsesino.actor_id].paralizadoEstaNoche) {
+      const objId = accAsesino.objetivo_id
+      const obj = estadoLocal[objId]
 
-        if (asesinado && objetivoId === 'rika') {
-          const rika = usuarios.find(u => u.avatar === 'rika')
-          if (rika && !rika.objeto_usado) {
-            asesinado = false
-            await supabase.from('usuarios').update({ objeto_usado: true }).eq('avatar', 'rika')
-            await _logEvento(ronda, 'pasiva_rika',
-              'El Fragmento de Tiempo de Rika absorbió el ataque. Ha sobrevivido esta noche.', true)
+      if (obj?.vivo) {
+        let ataqueExitoso = true
+
+        if (protegidoId === objId) {
+          ataqueExitoso = false
+          // Alerta al asesino del fallo
+          await supabase.from('acciones_noche').update({ 
+            resultado_secreto: `Te colaste en los aposentos de ${obj.nombre}, pero Keiichi apareció de la nada blandiendo su bate y frustró tu ataque.` 
+          }).eq('id', accAsesino.id)
+          
+          // Alerta exclusiva a Keiichi desvelando al asesino en privado
+          if (accKeiichi) {
+            const asesinoReal = estadoLocal[accAsesino.actor_id]
+            await supabase.from('acciones_noche').update({ 
+              resultado_secreto: `¡Tu guardia fue providencial! El Asesino intentó atacar a tu protegido, pero interceptaste el golpe. Has descubierto que el atacante infiltrado es ${asesinoReal.nombre}.` 
+            }).eq('id', accKeiichi.id)
           }
         }
 
-        if (asesinado) {
-          await supabase.from('usuarios').update({ vivo: false }).eq('avatar', objetivoId)
-          await _logEvento(ronda, 'muerte_noche',
-            `${objetivo.nombre} fue asesinado/a during la noche.`, true)
-
-          const vivosDespues = Object.values(estadoLocal).filter(u => u.vivo && u.avatar !== objetivoId)
-          if (_comprobarVictoriaAsesino(vivosDespues)) {
-            const asesino = vivosDespues.find(u => u.bando === 'asesino')
-            await _logEvento(ronda, 'victoria_asesino',
-              `Solo quedan 2 supervivientes. ${asesino?.nombre || 'El Asesino'} ha ganado.`, true)
-            await supabase.from('estado_juego').update({ fase_actual: 'finalizado', ganador: 'asesino' }).eq('id', 1)
-            await _marcarAccionesProcesadas(accionesRonda)
-            return { resultado: 'victoria_asesino', error: null }
-          }
+        if (ataqueExitoso) {
+          await supabase.from('usuarios').update({ vivo: false }).eq('avatar', objId)
+          alguienMurio = true
+          nombreMuerto = obj.nombre
+          await supabase.from('acciones_noche').update({ 
+            resultado_secreto: `Te infiltraste sin hacer ruido. Tu ejecución sobre ${obj.nombre} ha sido limpia y letal.` 
+          }).eq('id', accAsesino.id)
         }
       }
-    } else if (accionAsesino && actorAsesino?.paralizadoEstaNoche) {
-      await _logEvento(ronda, 'asesino_paralizado',
-        'El asesino fue paralizado por Shion. No pudo actuar esta noche.', true)
+    } else if (accAsesino && estadoLocal[accAsesino.actor_id]?.paralizadoEstaNoche) {
+      await supabase.from('acciones_noche').update({ 
+        resultado_secreto: `Intentaste salir a limpiar las calles, pero Shion te emboscó primero con su Táser, dejándote completamente inmovilizado.` 
+      }).eq('id', accAsesino.id)
     }
 
-    await _marcarAccionesProcesadas(accionesRonda)
-    
-    // ── CORRECCIÓN DE PACING: El amanecer ahora transporta al Día (Discusión) ──
-    await cambiarFase('dia', 1) 
+    // ── 6. EMISIÓN DE LOGS AMBIENTALES (Niebla de Guerra Pura) ────────────
+    if (alguienMurio) {
+      await _logEvento(ronda, 'muerte_noche', `Las cigarras cantaron con un tono desgarrador a mitad de la noche. Al amanecer, se descubre que las calles reclaman el cuerpo sin vida de ${nombreMuerto}.`, true)
+    } else {
+      await _logEvento(ronda, 'paz_noche', `La noche transcurrió bajo un silencio denso pero pacífico. Con los primeros rayos de sol, todos los integrantes se saludan ilesos en el desayuno.`, true)
+    }
+
+    // Evaluación de finalización post-nocturna
+    const { data: chequeoVictoria } = await supabase.from('usuarios').select('*')
+    const vivosFin = chequeoVictoria.filter(u => u.vivo && u.avatar !== 'admin')
+    if (vivosFin.length <= 2 && vivosFin.some(u => u.bando === 'asesino')) {
+      await _logEvento(ronda, 'victoria_asesino', `Los supervivientes se miran con desesperación. Ya no quedan manos suficientes para detener la purga.`, true)
+      await supabase.from('estado_juego').update({ fase_actual: 'finalizado', ganador: 'asesino' }).eq('id', 1)
+      await supabase.from('acciones_noche').update({ procesada: true }).in('id', accionesRonda.map(a => a.id))
+      return { resultado: 'victoria_asesino', error: null }
+    }
+
+    await supabase.from('acciones_noche').update({ procesada: true }).in('id', accionesRonda.map(a => a.id))
+    await cambiarFase('dia', 1)
     return { resultado: 'noche_procesada', error: null }
-  }, [acciones, usuarios, estadoJuego, cambiarFase])
+  }, [acciones, estadoJuego, usuarios, cambiarFase])
 
-  // ── Registrar voto ────────────────────────────────────────────────────────
+  // ── Registrar Voto Confidencial ───────────────────────────────────────────
   const registrarVoto = useCallback(async (votanteId, nominadoId) => {
     const ronda = estadoJuego?.ronda_actual ?? 0
     const votante = usuarios.find(u => u.avatar === votanteId)
-
-    const peso = votanteId === 'mion' && !votante?.objeto_usado ? 2 : 1
-    if (votanteId === 'mion' && !votante?.objeto_usado) {
-      await supabase.from('usuarios').update({ objeto_usado: true }).eq('avatar', 'mion')
+    const peso = votanteId === 'mion' && votante?.objeto_usado === 0 ? 2 : 1
+    if (votanteId === 'mion' && votante?.objeto_usado === 0) {
+      await supabase.from('usuarios').update({ objeto_usado: 1 }).eq('avatar', 'mion')
     }
-
-    const { error } = await supabase.from('votos').upsert(
-      { votante_id: votanteId, nominado_id: nominadoId, ronda, peso },
-      { onConflict: 'votante_id,ronda' }
-    )
+    const { error } = await supabase.from('votos').upsert({ votante_id: votanteId, nominado_id: nominadoId, ronda, peso }, { onConflict: 'votante_id,ronda' })
     return { error }
   }, [estadoJuego, usuarios])
 
-  // ── Registrar acción nocturna ─────────────────────────────────────────────
+  // ── Registrar Acción Confidencial ─────────────────────────────────────────
   const registrarAccion = useCallback(async (actorId, objetivoId, tipoAccion) => {
     const ronda = estadoJuego?.ronda_actual ?? 0
-    const { error } = await supabase.from('acciones_noche').upsert(
-      { ronda, actor_id: actorId, objetivo_id: objetivoId, tipo_accion: tipoAccion },
-      { onConflict: 'ronda,actor_id' }
-    )
+    const { error } = await supabase.from('acciones_noche').upsert({ 
+      ronda, actor_id: actorId, objetivo_id: objetivoId, tipo_accion: tipoAccion, resultado_secreto: 'Preparando preparativos en absoluto secreto...' 
+    }, { onConflict: 'ronda,actor_id' })
     return { error }
   }, [estadoJuego])
 
-  // ── Helpers privados ──────────────────────────────────────────────────────
   async function _logEvento(ronda, tipo, descripcion, publica) {
     await supabase.from('log_juego').insert({ ronda, tipo, descripcion, publica })
   }
 
-  async function _marcarAccionesProcesadas(accionesRonda) {
-    const ids = accionesRonda.map(a => a.id)
-    if (ids.length > 0) {
-      await supabase.from('acciones_noche').update({ procesada: true }).in('id', ids)
-    }
-  }
-
-  function _comprobarVictoriaAsesino(vivosArray) {
-    const totalVivos = vivosArray.filter(u => u.vivo !== false).length
-    const asesinoVivo = vivosArray.some(u => u.bando === 'asesino' && u.vivo !== false)
-    return asesinoVivo && totalVivos <= 2
-  }
-
-  const getPersonaje = (avatarId) => PERSONAJES.find(p => p.id === avatarId)
-
-  return {
-    estadoJuego,
-    usuarios,
-    votos,
-    acciones,
-    log,
-    cargando,
-    rtActivo,
-    recargar: cargar,
-    cambiarFase,
-    toggleJuegoHabilitado,
-    asignarRoles,
-    resetearPassword,
-    procesarVotacion,
-    procesarNoche,
-    registrarVoto,
-    registrarAccion,
-    getPersonaje,
+  return { 
+    estadoJuego, usuarios, votos, acciones, log, cargando, rtActivo, 
+    recargar: cargar, cambiarFase, toggleJuegoHabilitado, asignarRoles, resetearPassword, 
+    procesarVotacion, procesarNoche, registrarVoto, registrarAccion, 
+    getPersonaje: (id) => PERSONAJES.find(p => p.id === id) 
   }
 }
