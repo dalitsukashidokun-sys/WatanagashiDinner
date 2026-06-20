@@ -7,31 +7,31 @@ const LISTA_REPRODUCCION = [
     id: 1,
     titulo: "Higurashi Main Theme",
     archivo: "/music/Higurashi No Naku Koro Ni OST - Main Theme - seranastarflower (480p).mp4",
-    imagen: "/music/MUSIC.png"
+    imagen: "/music/Higurashi No Naku Koro Ni.png"
   },
   {
     id: 2,
     titulo: "You (M.Box Arrange)",
     archivo: "/music/You (M.Box Arrange) - dai - Topic (1080p).mp4",
-    imagen: "/music/MUSIC.png"
+    imagen: "/music/You.png"
   },
   {
     id: 3,
     titulo: "I Believe What You Said (AmaLee)",
     archivo: "/music/AmaLee - I Believe What You Said (From _Higurashi_ When They Cry - GOU_).mp4",
-    imagen: "/music/MUSIC.png"
+    imagen: "/music/I Believe What You Saidpng"
   },
   {
     id: 4,
     titulo: "When They Cry (AmaLee)",
     archivo: "/music/When They Cry.mp4",
-    imagen: "/music/MUSIC.png"
+    imagen: "/music/Nostalgia_II.png"
   },
   {
     id: 5,
     titulo: "Irregular Entropy (Ayane)",
     archivo: "/music/Irregular Entropy.mp4",
-    imagen: "/music/MUSIC.png"
+    imagen: "/music/Irregular Entropy.png"
   }
 ];
 
