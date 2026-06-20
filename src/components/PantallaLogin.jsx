@@ -117,7 +117,7 @@ export default function PantallaLogin({ onLogin, onAdminAccess }) {
             <button className={btnVN} onClick={() => setFase('avatar')}>Iniciar Pedido</button>
             <button
               className={`${btnVN} flex items-center justify-center gap-2 ${reproduciendo ? '!border-red-700 !text-red-500' : ''}`}
-              onClick={togglePlay}
+              onClick={onAbrirMusica}
               title={pistaActual?.titulo}
             >
               <span className={reproduciendo ? 'animate-pulse' : ''}>{reproduciendo ? '⏸' : '▶'}</span>
@@ -127,8 +127,7 @@ export default function PantallaLogin({ onLogin, onAdminAccess }) {
               Introducir Código
             </button>
           </div>
-        )}
-
+     )}
         {/* ── CÓDIGO ADMIN ── */}
         {fase === 'codigo' && (
           <div className="card-dark p-8 flex flex-col items-center gap-4 w-full max-w-sm animate-fade-in">
