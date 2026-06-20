@@ -127,7 +127,17 @@ export default function PantallaLogin({ onLogin, onAdminAccess }) {
               Introducir Código
             </button>
           </div>
-     )}
+        )}
+
+
+
+
+
+
+
+
+
+
         {/* ── CÓDIGO ADMIN ── */}
         {fase === 'codigo' && (
           <div className="card-dark p-8 flex flex-col items-center gap-4 w-full max-w-sm animate-fade-in">
