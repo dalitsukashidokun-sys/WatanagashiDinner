@@ -23,13 +23,13 @@ const LISTA_REPRODUCCION = [
     { 
       id: 4, 
       titulo: "When They Cry (AmaLee)", 
-      archivo: "/music/When They Cry (From Higurashi) - AmaLee.mp4",
+      archivo: "/music/When They Cry.mp4",
       imagen: "/music/MUSIC.png"
     },
     { 
       id: 5, 
       titulo: "Irregular Entropy (Ayane)", 
-      archivo: "/music/Ayane ~ Irregular Entropy.mp4",
+      archivo: "/music/Irregular Entropy.mp4",
       imagen: "/music/MUSIC.png"
     }
   ];
