@@ -126,6 +126,16 @@ export default function PantallaLogin({ onLogin, onAdminAccess }) {
             <button className={btnVN} onClick={() => { setFase('codigo'); setCodigo(''); setError('') }}>
               Introducir Código
             </button>
+
+            <button
+          type="button"
+          onClick={onAbrirMusica}
+          aria-label="Abrir reproductor de música"
+          className="ml-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-500 hover:text-amber-300
+            transition-colors border-l border-stone-800 pl-2.5 py-0.5"
+        >
+          Abrir
+        </button>
           </div>
         )}
 
