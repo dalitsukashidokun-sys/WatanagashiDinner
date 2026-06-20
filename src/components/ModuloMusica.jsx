@@ -13,7 +13,7 @@ const LISTA_REPRODUCCION = [
     id: 2,
     titulo: "You (M.Box Arrange)",
     archivo: "/music/You (M.Box Arrange) - dai - Topic (1080p).mp4",
-    imagen: "/music/You.png"
+    imagen: "/music/You.jpg"
   },
   {
     id: 3,
