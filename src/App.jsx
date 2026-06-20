@@ -16,7 +16,6 @@ import PanelAdmin    from './components/PanelAdmin'
 import VistaJuego    from './components/VistaJuego'
 import VistaMusica   from './components/VistaMusica'
 import ModuloMusica  from './components/ModuloMusica' // 👈 INTEGRADO: Importación global
-import { MusicaProvider } from './context/MusicaContext'
 
 export default function App() {
   const [usuario,         setUsuario]         = useState(null)
@@ -87,7 +86,6 @@ export default function App() {
   }
 
   return (
-    <MusicaProvider>
     <div className="min-h-screen flex flex-col relative">
       {/* ── Fondos ── */}
       <div className={`fixed inset-0 bg-cover bg-center bg-fixed transition-opacity duration-700 block md:hidden
@@ -158,6 +156,5 @@ export default function App() {
         )}
       </div>
     </div>
-    </MusicaProvider>
   )
 }

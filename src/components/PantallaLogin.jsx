@@ -5,6 +5,7 @@
 import { useState } from 'react'
 import { supabase }              from '../supabaseClient'
 import { PERSONAJES, ADMIN_PASSWORD } from '../constants'
+import { useMusica } from '../context/MusicaContext'
 
 export default function PantallaLogin({ onLogin, onAdminAccess }) {
   const [fase,     setFase]     = useState('inicio')  // 'inicio'|'codigo'|'avatar'|'registro'|'clave'
@@ -15,6 +16,7 @@ export default function PantallaLogin({ onLogin, onAdminAccess }) {
   const [error,   setError]    = useState('')
   const [ok,      setOk]       = useState('')
   const [busy,    setBusy]     = useState(false)
+  const { reproduciendo, togglePlay, pistaActual } = useMusica()
 
   const limpiar = () => { setClave(''); setConfirm(''); setError(''); setOk('') }
 
@@ -113,7 +115,14 @@ export default function PantallaLogin({ onLogin, onAdminAccess }) {
         {fase === 'inicio' && (
           <div className="flex flex-col gap-4 items-center animate-slide-up mt-20 md:mt-96">
             <button className={btnVN} onClick={() => setFase('avatar')}>Iniciar Pedido</button>
-            <button className={btnVN} onClick={() => {}}>Música de Fondo</button>
+            <button
+              className={`${btnVN} flex items-center justify-center gap-2 ${reproduciendo ? '!border-red-700 !text-red-500' : ''}`}
+              onClick={togglePlay}
+              title={pistaActual?.titulo}
+            >
+              <span className={reproduciendo ? 'animate-pulse' : ''}>{reproduciendo ? '⏸' : '▶'}</span>
+              Música de Fondo
+            </button>
             <button className={btnVN} onClick={() => { setFase('codigo'); setCodigo(''); setError('') }}>
               Introducir Código
             </button>

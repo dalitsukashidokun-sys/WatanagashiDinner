@@ -60,7 +60,7 @@ export default function VistaMusica({ onVolver }) {
         <div className="flex-1 overflow-y-auto p-8 pb-32">
           <div className="flex items-end gap-5 mb-8">
             <div className="w-32 h-32 rounded-xl overflow-hidden shadow-2xl shadow-black/50 border border-stone-800 shrink-0">
-              <img src="/music/main.png" alt="" className="w-full h-full object-cover" />
+              <img src="/music/MUSIC.png" alt="" className="w-full h-full object-cover" />
             </div>
             <div>
               <p className="text-xs uppercase tracking-widest text-amber-500 font-bold mb-1">Lista de reproducción</p>
