@@ -5,7 +5,7 @@ const LISTA_REPRODUCCION = [
     { 
       id: 1, 
       titulo: "Higurashi Main Theme", 
-      archivo: "/music/Higurashi No Naku Koro Ni OST - Main Theme - seranastarflower.mp4",
+      archivo: "/music/Higurashi No Naku Koro Ni OST.mp4",
       imagen: "/music/MUSIC.png"
     },
     { 
