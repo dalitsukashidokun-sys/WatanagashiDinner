@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { supabase }              from '../supabaseClient'
 import { PERSONAJES, ADMIN_PASSWORD } from '../constants'
 import { useMusica } from '../context/MusicaContext'
+import { VistaMusica } from './VistaMusica.jsx';
 
 export default function PantallaLogin({ onLogin, onAdminAccess, onAbrirMusica}) {
   const [fase,     setFase]     = useState('inicio')  // 'inicio'|'codigo'|'avatar'|'registro'|'clave'
