@@ -100,8 +100,8 @@ export default function PantallaLogin({ onLogin, onAdminAccess }) {
         {fase === 'inicio' && (
           <div className="text-center mb-16 select-none block md:hidden">
             <h1 className="font-serif text-5xl text-white font-bold tracking-wider drop-shadow-[0_5px_5px_rgba(0,0,0,1)]">
-              Higurashi <span className="text-red-600">N</span>o{' '}
-              <span className="text-red-600">N</span>aku Koro Ni
+              Higurashi No{' '}
+              <span className="text-red-600">Na</span>ku Koro Ni
             </h1>
             <p className="text-white mt-2 font-serif text-xl drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
               Watanagashi Festival
