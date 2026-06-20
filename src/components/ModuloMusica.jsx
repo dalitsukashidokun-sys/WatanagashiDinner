@@ -19,7 +19,7 @@ const LISTA_REPRODUCCION = [
     id: 3,
     titulo: "I Believe What You Said (AmaLee)",
     archivo: "/music/AmaLee - I Believe What You Said (From _Higurashi_ When They Cry - GOU_).mp4",
-    imagen: "/music/I Believe What You Saidpng"
+    imagen: "/music/I Believe What You Said.png"
   },
   {
     id: 4,
