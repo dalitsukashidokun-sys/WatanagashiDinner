@@ -7,7 +7,7 @@ import { supabase }              from '../supabaseClient'
 import { PERSONAJES, ADMIN_PASSWORD } from '../constants'
 import { useMusica } from '../context/MusicaContext'
 
-export default function PantallaLogin({ onLogin, onAdminAccess }) {
+export default function PantallaLogin({ onLogin, onAdminAccess, onAbrirMusica}) {
   const [fase,     setFase]     = useState('inicio')  // 'inicio'|'codigo'|'avatar'|'registro'|'clave'
   const [pjeSel,  setPjeSel]   = useState(null)        // personaje seleccionado
   const [codigo,  setCodigo]   = useState('')
