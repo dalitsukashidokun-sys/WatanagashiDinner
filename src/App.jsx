@@ -14,12 +14,15 @@ import VistaDetalle  from './components/VistaDetalle'
 import VistaComanda  from './components/VistaComanda'
 import PanelAdmin    from './components/PanelAdmin'
 import VistaJuego    from './components/VistaJuego'
+import VistaMusica   from './components/VistaMusica'
 import ModuloMusica  from './components/ModuloMusica' // 👈 INTEGRADO: Importación global
+import { MusicaProvider } from './context/MusicaContext'
 
 export default function App() {
   const [usuario,         setUsuario]         = useState(null)
   const [esAdmin,         setEsAdmin]         = useState(false)
   const [vista,           setVista]           = useState(VISTAS.MENU)
+  const [vistaAnterior,   setVistaAnterior]   = useState(VISTAS.MENU)
   const [platoDetalle,    setPlatoDetalle]    = useState(null)
   const [juegoHabilitado, setJuegoHabilitado] = useState(false)
 
@@ -84,6 +87,7 @@ export default function App() {
   }
 
   return (
+    <MusicaProvider>
     <div className="min-h-screen flex flex-col relative">
       {/* ── Fondos ── */}
       <div className={`fixed inset-0 bg-cover bg-center bg-fixed transition-opacity duration-700 block md:hidden
@@ -137,17 +141,23 @@ export default function App() {
           {vista === VISTAS.JUEGO && !esAdmin && (
             <VistaJuego usuario={usuario} />
           )}
+          {vista === VISTAS.MUSICA && (
+            <VistaMusica onVolver={() => handleNavegar(vistaAnterior)} />
+          )}
         </main>
 
-        <footer className="border-t border-stone-800/30 py-4 px-4 mt-auto">
+        <footer className={`border-t border-stone-800/30 py-4 px-4 mt-auto ${vista === VISTAS.MUSICA ? 'hidden' : ''}`}>
           <p className="text-center text-stone-600 text-xs font-serif">
             Cuando las cigarras lloran · Higurashi no Naku Koro ni
           </p>
         </footer>
 
         {/* ── INTEGRACIÓN DEL REPRODUCTOR DE MÚSICA GLOBAL ── */}
-        <ModuloMusica />
+        {vista !== VISTAS.MUSICA && (
+          <ModuloMusica onAbrirMusica={() => { setVistaAnterior(vista); handleNavegar(VISTAS.MUSICA) }} />
+        )}
       </div>
     </div>
+    </MusicaProvider>
   )
 }

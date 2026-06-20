@@ -117,6 +117,7 @@ export const VISTAS = {
   COMANDA: 'comanda',
   ADMIN:   'admin',
   JUEGO:   'juego',
+  MUSICA:  'musica',
 }
 
 export const FASES = {
