@@ -14,6 +14,7 @@ import VistaDetalle  from './components/VistaDetalle'
 import VistaComanda  from './components/VistaComanda'
 import PanelAdmin    from './components/PanelAdmin'
 import VistaJuego    from './components/VistaJuego'
+import ModuloMusica  from './components/ModuloMusica' // 👈 INTEGRADO: Importación global
 
 export default function App() {
   const [usuario,         setUsuario]         = useState(null)
@@ -55,7 +56,6 @@ export default function App() {
   }, [usuario])
 
   // ── Fondos responsivos según vista ───────────────────────────────────────
-  // VistaMenu y VistaJuego usan el fondo de menú; login y juego activo su propio fondo.
   const esVistaConFondoMenu = !esAdmin && (vista === VISTAS.MENU || vista === VISTAS.DETALLE || vista === VISTAS.COMANDA)
 
   // ── Hooks de datos ────────────────────────────────────────────────────────
@@ -86,20 +86,18 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col relative">
       {/* ── Fondos ── */}
-      {/* Fondo de menú (móvil) */}
       <div className={`fixed inset-0 bg-cover bg-center bg-fixed transition-opacity duration-700 block md:hidden
         ${esVistaConFondoMenu ? 'opacity-100' : 'opacity-0'}`}
         style={{ backgroundImage: "url('/fondos/Fondomenu_movil.png')" }} />
-      {/* Fondo de menú (PC) */}
+      
       <div className={`fixed inset-0 bg-cover bg-center bg-fixed transition-opacity duration-700 hidden md:block
         ${esVistaConFondoMenu ? 'opacity-100' : 'opacity-0'}`}
         style={{ backgroundImage: "url('/fondos/Fondomenu_pc.png')" }} />
 
-      {/* Fondo base para admin / juego (móvil) */}
       <div className={`fixed inset-0 bg-cover bg-center bg-fixed transition-opacity duration-700 block md:hidden
         ${!esVistaConFondoMenu ? 'opacity-100' : 'opacity-0'}`}
         style={{ backgroundImage: "url('/fondos/fondo2.png')" }} />
-      {/* Fondo base para admin / juego (PC) */}
+      
       <div className={`fixed inset-0 bg-cover bg-center bg-fixed transition-opacity duration-700 hidden md:block
         ${!esVistaConFondoMenu ? 'opacity-100' : 'opacity-0'}`}
         style={{ backgroundImage: "url('/fondos/fondo.png')" }} />
@@ -146,6 +144,9 @@ export default function App() {
             Cuando las cigarras lloran · Higurashi no Naku Koro ni
           </p>
         </footer>
+
+        {/* ── INTEGRACIÓN DEL REPRODUCTOR DE MÚSICA GLOBAL ── */}
+        <ModuloMusica />
       </div>
     </div>
   )

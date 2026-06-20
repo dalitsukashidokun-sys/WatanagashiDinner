@@ -14,14 +14,13 @@ export default function PanelAdmin({ comandas, cargando, totalPlatos, rtActivo }
   const [tab, setTab] = useState('comanda')
 
   return (
-    <div className={`min-h-screen w-full bg-cover bg-center bg-fixed animate-fade-in ${
-      tab === 'juego'
-        ? 'bg-[url(/fondos/bgj_movil.png)] md:bg-[url(/fondos/bgj_pc.png)]'
-        : ''
-    }`}>
+    <div className="relative -mx-4 sm:-mx-6 -my-6 sm:-my-8 min-h-[calc(100vh-3.5rem)] animate-fade-in">
+      {tab === 'juego' && (
+        <div className="fixed inset-0 -z-10 bg-[url(/fondos/bgj_movil.png)] md:bg-[url(/fondos/bgj_pc.png)] bg-cover bg-center bg-fixed" />
+      )}
 
       {/* Capa de contraste oscura (bg-black/55) para que las métricas y los textos de administración sigan siendo legibles */}
-      <div className="min-h-screen w-full bg-black/55 p-4 space-y-4">
+      <div className="min-h-[calc(100vh-3.5rem)] w-full bg-black/55 p-4 space-y-4">
 
         {/* ── Cabecera ── */}
         <div className="flex items-center justify-between flex-wrap gap-3">
