@@ -254,7 +254,8 @@ export function useJuego() {
   // ══════════════════════════════════════════════════════════════════════════
   // PROCESAMIENTO DE NOCHE
   // Cola: Táser Shion → Protección Keiichi → Revelación Rika →
-  //       Rastreo Satoko → Asesinato → Verificar victoria
+  //       Asesinato (se resuelve aquí) → Rastreo Satoko (lee el resultado real
+  //       del asesinato) → Verificar victoria
   // ══════════════════════════════════════════════════════════════════════════
   const procesarNoche = useCallback(async () => {
     const ronda = estadoJuego?.ronda_actual ?? 0
@@ -305,32 +306,18 @@ export function useJuego() {
       }
     }
 
-    // ── 4. RASTREO DE SATOKO ──────────────────────────────────────────────
-    const acSatoko = accionesRonda.find(a => a.actor_id === 'satoko' && a.tipo_accion === 'rastrear')
-    const satoko = find('satoko')
-    if (acSatoko?.objetivo_id && satoko && !satoko.paralizadoEstaNoche) {
-      const obj = find(acSatoko.objetivo_id)
-      if (obj) {
-        // Buscar si el objetivo también realizó alguna acción esta noche
-        const objetivoActuo = accionesRonda.some(
-          a => a.actor_id === acSatoko.objetivo_id && a.actor_id !== 'satoko'
-        )
-        const usosRestantes = satoko.objeto_usado ? 1 : 2 // approx para el mensaje
-        await _log(ronda, 'rastreo',
-          `🪤 [SECRETO para Satoko] La trampa en la puerta de ${obj.nombre}: ${
-            objetivoActuo ? 'salió en la oscuridad y realizó una acción.' : 'permaneció en casa sin actuar.'
-          }`, false)
-        // Solo marcar objeto_usado si era el último uso (simplificado: marcar siempre)
-        await _marcarObjetoUsado('satoko')
-      }
-    }
-
-    // ── 5. ASESINATO ──────────────────────────────────────────────────────
+    // ── 4. ASESINATO (se resuelve ANTES que el rastreo de Satoko, para que
+    //       la trampa pueda reportar el resultado REAL de la noche y no solo
+    //       si el asesino registró una acción) ─────────────────────────────
     const acAsesino = accionesRonda.find(a => a.tipo_accion === 'asesinar')
+    let resultadoAsesinato = null // 'exito' | 'paralizado' | 'protegido' | null (no atacó)
+    let victimaAsesinato = null
+
     if (acAsesino?.objetivo_id) {
       const actorAsesino = find(acAsesino.actor_id)
 
       if (actorAsesino?.paralizadoEstaNoche) {
+        resultadoAsesinato = 'paralizado'
         await _log(ronda, 'asesino_paralizado',
           `⚡ El asesino fue paralizado por Shion. No pudo actuar esta noche.`, true)
       } else {
@@ -341,30 +328,57 @@ export function useJuego() {
           // ¿Está protegido por Keiichi?
           if (protegidoAvatar === acAsesino.objetivo_id) {
             asesinado = false
+            resultadoAsesinato = 'protegido'
             await _log(ronda, 'proteccion_exitosa',
               `⚾ El asesino atacó a ${objetivo.nombre}, pero el bate de Keiichi lo protegió.`, true)
           }
 
           if (asesinado) {
+            resultadoAsesinato = 'exito'
+            victimaAsesinato = objetivo
             await _marcarMuerto(acAsesino.objetivo_id)
             await _log(ronda, 'muerte_noche',
               `🌙 ${objetivo.nombre} fue asesinado/a durante la noche.`, true)
-
-            // Comprobar victoria del asesino
-            const vivosRestantes = Object.values(estado)
-              .filter(u => u.vivo && u.avatar !== acAsesino.objetivo_id)
-
-            if (_victoriaAsesino(vivosRestantes)) {
-              const asesino = vivosRestantes.find(u => u.bando === 'asesino')
-              await _log(ronda, 'victoria_asesino',
-                `🗡️ Solo quedan ${vivosRestantes.length} supervivientes. ${asesino?.nombre ?? 'El Asesino'} gana.`, true)
-              await supabase.from('estado_juego')
-                .update({ fase_actual: 'finalizado', ganador: 'asesino' }).eq('id', 1)
-              await _marcarProcesadas(accionesRonda)
-              return { resultado: 'victoria_asesino', error: null }
-            }
           }
         }
+      }
+    }
+
+    // ── 5. RASTREO DE SATOKO ──────────────────────────────────────────────
+    // La trampa reporta si el objetivo SALIÓ DE CASA Y ATACÓ con éxito esta
+    // noche (es decir, si fue el asesino y su ataque culminó en una muerte).
+    // Antes esto se basaba solo en si había una fila de "acción registrada",
+    // lo que delataba al asesino incluso en la ronda 1, antes de que matara
+    // a nadie, y no reflejaba paralizaciones o protecciones de esa misma noche.
+    const acSatoko = accionesRonda.find(a => a.actor_id === 'satoko' && a.tipo_accion === 'rastrear')
+    const satoko = find('satoko')
+    if (acSatoko?.objetivo_id && satoko && !satoko.paralizadoEstaNoche) {
+      const obj = find(acSatoko.objetivo_id)
+      if (obj) {
+        const fueElAsesinoYMato =
+          acAsesino?.actor_id === acSatoko.objetivo_id && resultadoAsesinato === 'exito'
+
+        await _log(ronda, 'rastreo',
+          `🪤 [SECRETO para Satoko] La trampa en la puerta de ${obj.nombre}: ${
+            fueElAsesinoYMato ? 'salió en la oscuridad y cometió un asesinato.' : 'permaneció en casa sin matar a nadie.'
+          }`, false)
+        await _marcarObjetoUsado('satoko')
+      }
+    }
+
+    // ── Comprobar victoria del asesino (tras resolver ataque y rastreo) ────
+    if (resultadoAsesinato === 'exito' && victimaAsesinato) {
+      const vivosRestantes = Object.values(estado)
+        .filter(u => u.vivo && u.avatar !== victimaAsesinato.avatar)
+
+      if (_victoriaAsesino(vivosRestantes)) {
+        const asesino = vivosRestantes.find(u => u.bando === 'asesino')
+        await _log(ronda, 'victoria_asesino',
+          `🗡️ Solo quedan ${vivosRestantes.length} supervivientes. ${asesino?.nombre ?? 'El Asesino'} gana.`, true)
+        await supabase.from('estado_juego')
+          .update({ fase_actual: 'finalizado', ganador: 'asesino' }).eq('id', 1)
+        await _marcarProcesadas(accionesRonda)
+        return { resultado: 'victoria_asesino', error: null }
       }
     }
 

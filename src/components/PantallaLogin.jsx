@@ -6,9 +6,8 @@ import { useState } from 'react'
 import { supabase }              from '../supabaseClient'
 import { PERSONAJES, ADMIN_PASSWORD } from '../constants'
 import { useMusica } from '../context/MusicaContext'
-import { VistaMusica } from './VistaMusica.jsx';
 
-export default function PantallaLogin({ onLogin, onAdminAccess, onAbrirMusica}) {
+export default function PantallaLogin({ onLogin, onAdminAccess }) {
   const [fase,     setFase]     = useState('inicio')  // 'inicio'|'codigo'|'avatar'|'registro'|'clave'
   const [pjeSel,  setPjeSel]   = useState(null)        // personaje seleccionado
   const [codigo,  setCodigo]   = useState('')
@@ -118,10 +117,10 @@ export default function PantallaLogin({ onLogin, onAdminAccess, onAbrirMusica}) 
             <button className={btnVN} onClick={() => setFase('avatar')}>Iniciar Pedido</button>
             <button
               className={`${btnVN} flex items-center justify-center gap-2 ${reproduciendo ? '!border-red-700 !text-red-500' : ''}`}
-              onClick={onAbrirMusica}
+              onClick={togglePlay}
               title={pistaActual?.titulo}
             >
-            
+              <span className={reproduciendo ? 'animate-pulse' : ''}>{reproduciendo ? '⏸' : '▶'}</span>
               Música de Fondo
             </button>
             <button className={btnVN} onClick={() => { setFase('codigo'); setCodigo(''); setError('') }}>
